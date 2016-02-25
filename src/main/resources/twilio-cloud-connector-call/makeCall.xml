@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ ~  Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ ~
+ ~  WSO2 Inc. licenses this file to you under the Apache License,
+ ~  Version 2.0 (the "License"); you may not use this file except
+ ~  in compliance with the License.
+ ~  You may obtain a copy of the License at
+ ~
+ ~    http://www.apache.org/licenses/LICENSE-2.0
+ ~
+ ~  Unless required by applicable law or agreed to in writing,
+ ~  software distributed under the License is distributed on an
+ ~  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ ~  KIND, either express or implied.  See the License for the
+ ~  specific language governing permissions and limitations
+ ~  under the License.
+-->
+
+<template name="makeCall" xmlns="http://ws.apache.org/ns/synapse">
+    <!--Required Parameters.
+        See http://www.twilio.com/docs/api/rest/making-calls#post-parameters-required for full specification and allowed values.
+    -->
+    <parameter name="to"/>
+    <parameter name="from"/>
+    <!--One of the below must be provided.
+        See http://www.twilio.com/docs/api/rest/making-calls#post-parameters-required for full specification and allowed values.
+    -->
+    <parameter name="url"/>
+    <parameter name="applicationSid"/>
+    <!--Optional parameters.
+        See http://www.twilio.com/docs/api/rest/making-calls#post-parameters-optional for full specification and allowed values.
+     -->
+    <parameter name="method"/>
+    <parameter name="fallbackUrl"/>
+    <parameter name="fallbackMethod"/>
+    <parameter name="statusCallback"/>
+    <parameter name="statusCallbackMethod"/>
+    <parameter name="sendDigits"/>
+    <parameter name="ifMachine"/>
+    <parameter name="timeout"/>
+    <parameter name="record"/>
+    <sequence>
+        <class name="org.wso2.carbon.connector.twilio.call.MakeCall"/>
+    </sequence>
+</template>
