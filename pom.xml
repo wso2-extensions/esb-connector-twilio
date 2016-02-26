@@ -16,9 +16,7 @@
  ~  specific language governing permissions and limitations
  ~  under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.wso2.carbon.connector</groupId>
     <artifactId>org.wso2.carbon.connector.twilio</artifactId>
@@ -125,12 +123,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>ca.uhn.hapi.wso2</groupId>
-            <artifactId>hapi</artifactId>
-            <version>${hapi.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.wso2.esb</groupId>
             <artifactId>org.wso2.carbon.esb.common</artifactId>
             <version>4.8.0</version>
@@ -158,6 +150,12 @@
             <version>3.3.13</version>
         </dependency>
     </dependencies>
+    <scm>
+        <connection>scm:git:https://github.com/wso2-extensions/esb-connector-twilio.git</connection>
+        <url>https://github.com/wso2-extensions/esb-connector-twilio.git</url>
+        <developerConnection>scm:git:https://github.com/wso2-extensions/esb-connector-twilio</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
     <build>
         <plugins>
             <plugin>
