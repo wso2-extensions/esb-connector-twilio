@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  * 
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -17,29 +17,25 @@
  */
 package org.wso2.carbon.connector.twilio.usage;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Account;
-import com.twilio.sdk.resource.instance.UsageTrigger;
-
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.usage.Trigger;
+import com.twilio.rest.api.v2010.account.usage.TriggerUpdater;
 /*
- * Class mediator for getting a an USAGE triggers
+ * Class mediator for getting a USAGE triggers
  * For more information, see http://www.twilio.com/docs/api/rest/usage-triggers
  */
 public class UpdateUsageTrigger extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: update usage trigger");
@@ -55,30 +51,24 @@ public class UpdateUsageTrigger extends AbstractConnector {
         String callbackMethod =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_CALLBACK_METHOD);
-        Map<String, String> params = new HashMap<String, String>();
+
+        TwilioUtil.initTwilio(messageContext);
+        TriggerUpdater triggerUpdater = Trigger.updater(triggerSid);
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            triggerUpdater.setFriendlyName(friendlyName);
         }
         if (callbackUrl != null) {
-            params.put(TwilioUtil.TWILIO_CALLBACK_URL, callbackUrl);
+            triggerUpdater.setCallbackUrl(URI.create(callbackUrl));
         }
         if (callbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_CALLBACK_METHOD, callbackMethod);
+            triggerUpdater.setCallbackMethod(HttpMethod.valueOf(callbackMethod));
         }
-        try {
+        Trigger trigger = triggerUpdater.update();
 
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            Account account = twilioRestClient.getAccount();
-            UsageTrigger usageTrigger = account.getUsageTrigger(triggerSid);
-            usageTrigger.update(params);
-            OMElement omResponse = TwilioUtil.parseResponse("usagetrigger.update.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_USAGE_TRIGGER_SID, usageTrigger.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0008", messageContext);
-            throw new SynapseException(e);
-        }
+        OMElement omResponse = TwilioUtil.parseResponse("usagetrigger.update.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_USAGE_TRIGGER_SID, trigger.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: update usage trigger");
     }
 }

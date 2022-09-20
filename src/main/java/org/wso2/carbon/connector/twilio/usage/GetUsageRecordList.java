@@ -17,31 +17,52 @@
  */
 package org.wso2.carbon.connector.twilio.usage;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
- * Class mediator for getting a an USAGE resources
+ * Class mediator for getting a USAGE resources
  * For more information, see http://www.twilio.com/docs/api/rest/usage-records
  */
 public class GetUsageRecordList extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get usage record List");
+
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_USAGE +
+                        "/" +
+                        TwilioUtil.API_USAGE_RECORDS
+        );
+        this.addQueryParams(request, messageContext);
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
+        log.auditLog("End: get usage record List");
+    }
+
+    private void addQueryParams(Request request, MessageContext messageContext) {
         String category =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_USAGE_CATEGORY);
@@ -51,40 +72,16 @@ public class GetUsageRecordList extends AbstractConnector {
         String endDate =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_END_DATE);
-        Map<String, String> params = new HashMap<String, String>();
+
         if (category != null) {
-            params.put(TwilioUtil.TWILIO_CATEGORY, category);
+            request.addQueryParam(TwilioUtil.TWILIO_CATEGORY, category);
         }
         if (startDate != null) {
-            params.put(TwilioUtil.TWILIO_START_DATE, startDate);
+            request.addQueryParam(TwilioUtil.TWILIO_START_DATE, startDate);
         }
         if (endDate != null) {
-            params.put(TwilioUtil.TWILIO_END_DATE, endDate);
+            request.addQueryParam(TwilioUtil.TWILIO_END_DATE, endDate);
         }
-        try {
-
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_USAGE +
-                                    "/" +
-                                    TwilioUtil.API_USAGE_RECORDS,
-                            "GET", params);
-
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0008", messageContext);
-            throw new SynapseException(e);
-        }
-        log.auditLog("End: get usage record List");
     }
+
 }

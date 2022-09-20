@@ -19,14 +19,13 @@ package org.wso2.carbon.connector.twilio.application;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Application;
+import com.twilio.rest.api.v2010.account.Application;
+import com.twilio.rest.api.v2010.account.ApplicationDeleter;
 
 /*
  * Class mediator for deleting an application from the account it's bound to.
@@ -41,22 +40,17 @@ public class RemoveApplication extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_APPLICATION_SID);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            Application application = twilioRestClient.getAccount().getApplication(applicationSid);
-            OMElement omResponse = null;
-            if (application.delete()) {
-                omResponse = TwilioUtil.parseResponse("application.delete.success");
-            } else {
-                omResponse = TwilioUtil.parseResponse("application.delete.fail");
-            }
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_APPLICATION_SID, application.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e);
-            TwilioUtil.handleException(e, "0002", messageContext);
-            throw new SynapseException(e);
+        TwilioUtil.initTwilio(messageContext);
+        ApplicationDeleter applicationDeleter = Application.deleter(applicationSid);
+        OMElement omResponse;
+        if (applicationDeleter.delete()) {
+            omResponse = TwilioUtil.parseResponse("application.delete.success");
+        } else {
+            omResponse = TwilioUtil.parseResponse("application.delete.fail");
         }
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_APPLICATION_SID, applicationSid);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: remove application");
     }
 }

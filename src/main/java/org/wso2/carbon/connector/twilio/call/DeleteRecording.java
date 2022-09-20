@@ -19,15 +19,13 @@ package org.wso2.carbon.connector.twilio.call;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Recording;
+import com.twilio.rest.api.v2010.account.Recording;
+import com.twilio.rest.api.v2010.account.RecordingDeleter;
 
 /*
  * Class mediator for deleting a recording instance based on its Sid.
@@ -37,7 +35,7 @@ import com.twilio.sdk.resource.instance.Recording;
 public class DeleteRecording extends AbstractConnector {
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: delete recording");
@@ -45,24 +43,20 @@ public class DeleteRecording extends AbstractConnector {
         String recordingSid =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_RECORDING_SID);
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            // Get an recording object from its sid.
-            Recording recording = twilioRestClient.getAccount().getRecording(recordingSid);
-            OMElement omResponse = null;
-            if (recording.delete()) {
-                omResponse = TwilioUtil.parseResponse("recording.delete.success");
-            } else {
-                omResponse = TwilioUtil.parseResponse("recording.delete.fail");
-            }
 
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_RECORDING_SID, recording.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0003", messageContext);
-            throw new SynapseException(e);
+        TwilioUtil.initTwilio(messageContext);
+        RecordingDeleter recordingDeleter = Recording.deleter(recordingSid);
+        OMElement omResponse;
+
+        if (recordingDeleter.delete()) {
+            omResponse = TwilioUtil.parseResponse("recording.delete.success");
+        } else {
+            omResponse = TwilioUtil.parseResponse("recording.delete.fail");
         }
+
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_RECORDING_SID, recordingSid);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: delete recording");
     }
 }

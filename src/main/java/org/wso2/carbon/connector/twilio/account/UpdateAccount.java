@@ -17,20 +17,15 @@
  */
 package org.wso2.carbon.connector.twilio.account;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Account;
+import com.twilio.rest.api.v2010.Account;
+import com.twilio.rest.api.v2010.AccountUpdater;
 
 /*
  * Class mediator for Updating an account/subaccount.
@@ -39,7 +34,7 @@ import com.twilio.sdk.resource.instance.Account;
  */
 public class UpdateAccount extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: update account");
@@ -57,37 +52,27 @@ public class UpdateAccount extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_SUB_ACCOUNT_SID);
 
-        // Creates a Map containing the parameters which are needed to be
-        // updated
-        Map<String, String> params = new HashMap<String, String>();
+        TwilioUtil.initTwilio(messageContext);
+        AccountUpdater accountUpdater;
+        // If a sub account need to be updated
+        if (subAccountSid != null) {
+            accountUpdater = Account.updater(subAccountSid);
+        } else {
+            // If the main account needs to be updated
+            accountUpdater = Account.updater();
+        }
 
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            accountUpdater.setFriendlyName(friendlyName);
         }
         if (status != null) {
-            params.put(TwilioUtil.TWILIO_STATUS, status);
+            accountUpdater.setStatus(Account.Status.valueOf(status));
         }
+        Account account = accountUpdater.update();
+        OMElement omResponse = TwilioUtil.parseResponse("account.update.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.TWILIO_ACCOUNT_SID, account.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            Account account;
-            // If a sub account need to be updated
-            if (subAccountSid != null) {
-                account = twilioRestClient.getAccount(subAccountSid);
-            } else {
-                // If the main account needs to be updated
-                account = twilioRestClient.getAccount();
-            }
-            account.update(params);
-            OMElement omResponse = TwilioUtil.parseResponse("account.update.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.TWILIO_ACCOUNT_SID, account.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0001", messageContext);
-            throw new SynapseException(e);
-        }
         log.auditLog("End: update account");
     }
 }

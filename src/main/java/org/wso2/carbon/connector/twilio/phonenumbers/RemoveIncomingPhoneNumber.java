@@ -19,32 +19,21 @@ package org.wso2.carbon.connector.twilio.phonenumbers;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.IncomingPhoneNumber;
-
+import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
+import com.twilio.rest.api.v2010.account.IncomingPhoneNumberDeleter;
 /*
  * Class mediator for removing an incoming a phone numbers.
  * For more information, see
  * http://www.twilio.com/docs/api/rest/incoming-phone-numbers#instance-delete
  */
 public class RemoveIncomingPhoneNumber extends AbstractConnector {
-
-    // //Authorization details
-    // private String accountSid;
-    // private String authToken;
-    //
-    // //Sid of the required number
-    // private String incomingPhoneNumberSid;
-
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: remove phone number");
@@ -54,27 +43,18 @@ public class RemoveIncomingPhoneNumber extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_INCOMING_PHONE_SID);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            // Get an incoming phone number allocated to the Twilio account by
-            // its Sid.
-            IncomingPhoneNumber number =
-                    twilioRestClient.getAccount()
-                            .getIncomingPhoneNumber(incomingPhoneNumberSid);
-            OMElement omResponse = null;
-            if (number.delete()) {
-                omResponse = TwilioUtil.parseResponse("phonenumber.delete.success");
-            } else {
-                omResponse = TwilioUtil.parseResponse("phonenumber.delete.fail");
-            }
-
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_INCOMING_PHONE_SID, number.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0005", messageContext);
-            throw new SynapseException(e);
+        TwilioUtil.initTwilio(messageContext);
+        IncomingPhoneNumberDeleter incomingPhoneNumberDeleter = IncomingPhoneNumber.deleter(incomingPhoneNumberSid);
+        OMElement omResponse;
+        if (incomingPhoneNumberDeleter.delete()) {
+            omResponse = TwilioUtil.parseResponse("phonenumber.delete.success");
+        } else {
+            omResponse = TwilioUtil.parseResponse("phonenumber.delete.fail");
         }
+
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_INCOMING_PHONE_SID, incomingPhoneNumberSid);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: remove phone number");
     }
 }

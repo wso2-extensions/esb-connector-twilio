@@ -17,18 +17,16 @@
  */
 package org.wso2.carbon.connector.twilio.queue;
 
+import java.net.URI;
+
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Member;
-import com.twilio.sdk.resource.instance.Queue;
+import com.twilio.rest.api.v2010.account.queue.Member;
 
 /*
  * Class mediator for dequeuing a member from a queue instance.
@@ -37,7 +35,7 @@ import com.twilio.sdk.resource.instance.Queue;
 
 public class DequeueMember extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: dequeue member");
@@ -52,21 +50,13 @@ public class DequeueMember extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_URL);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
+        TwilioUtil.initTwilio(messageContext);
+        Member member = Member.updater(queueSid, callSid, URI.create(url)).update();
 
-            Queue queue = twilioRestClient.getAccount().getQueue(queueSid);
-            Member member = queue.getMember(callSid);
-            Member resMember = member.dequeue(url, "POST");
+        OMElement omResponse = TwilioUtil.parseResponse("member.dequeue.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, member.getCallSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
 
-            OMElement omResponse = TwilioUtil.parseResponse("member.dequeue.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, resMember.getCallSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0006", messageContext);
-            throw new SynapseException(e);
-        }
         log.auditLog("Start: dequeue member");
     }
 }

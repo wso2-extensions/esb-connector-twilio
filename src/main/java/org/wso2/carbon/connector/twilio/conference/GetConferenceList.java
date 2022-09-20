@@ -17,20 +17,19 @@
  */
 package org.wso2.carbon.connector.twilio.conference;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
  * Class mediator for getting Conference instances.
@@ -38,12 +37,29 @@ import com.twilio.sdk.TwilioRestResponse;
  */
 public class GetConferenceList extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get conference list");
 
-        // optional parameters for filtering resultant conferences.
-        // See http://www.twilio.com/docs/api/rest/conference#list-get-filters
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_CONFERENCES);
+        addQueryParams(request, messageContext);
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
+        log.auditLog("End: get conference list");
+
+    }
+
+    private void addQueryParams(Request request, MessageContext messageContext) {
         String status =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_STATUS);
@@ -57,43 +73,21 @@ public class GetConferenceList extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_DATE_UPDATED);
 
-        // Build a filter for the ConferenceList
-        Map<String, String> filter = new HashMap<String, String>();
-        if (status != null) {
-            filter.put(TwilioUtil.TWILIO_STATUS, status);
-        }
-        if (friendlyName != null) {
-            filter.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
-        }
         if (dateCreated != null) {
-            filter.put(TwilioUtil.TWILIO_DATECREATED, dateUpdated);
+            request.addQueryParam(TwilioUtil.TWILIO_DATECREATED, dateUpdated);
         }
+
         if (dateUpdated != null) {
-            filter.put(TwilioUtil.TWILIO_DATEUPDATED, dateUpdated);
+            request.addQueryParam(TwilioUtil.TWILIO_DATEUPDATED, dateUpdated);
         }
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_CONFERENCES,
-                            "GET", filter);
-
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0004", messageContext);
-            throw new SynapseException(e);
+        if (friendlyName != null) {
+            request.addQueryParam(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
         }
-        log.auditLog("End: get conference list");
+
+        if (status != null) {
+            request.addQueryParam(TwilioUtil.TWILIO_STATUS, status);
+        }
 
     }
 }

@@ -19,15 +19,14 @@ package org.wso2.carbon.connector.twilio.phonenumbers;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.OutgoingCallerId;
+import com.twilio.rest.api.v2010.account.OutgoingCallerId;
+import com.twilio.rest.api.v2010.account.OutgoingCallerIdDeleter;
+
 
 /*
  * Class mediator for purchasing a phone numbers.
@@ -37,7 +36,7 @@ import com.twilio.sdk.resource.instance.OutgoingCallerId;
 public class RemoveOutgoingPhoneNumber extends AbstractConnector {
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: remove outgoing phone number");
@@ -45,21 +44,16 @@ public class RemoveOutgoingPhoneNumber extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_OUTGOING_CALLERID);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            OutgoingCallerId callerId = twilioRestClient.getAccount().getOutgoingCallerId(outgoingCallerId);
-            OMElement omResponse = null;
-            if (callerId.delete()) {
-                omResponse = TwilioUtil.parseResponse("outgoingphonenumber.delete.success");
-            } else {
-                omResponse = TwilioUtil.parseResponse("outgoingphonenumber.delete.fail");
-            }
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0005", messageContext);
-            throw new SynapseException(e);
+        TwilioUtil.initTwilio(messageContext);
+        OutgoingCallerIdDeleter outgoingCallerIdDeleter = OutgoingCallerId.deleter(outgoingCallerId);
+        OMElement omResponse;
+        if (outgoingCallerIdDeleter.delete()) {
+            omResponse = TwilioUtil.parseResponse("outgoingphonenumber.delete.success");
+        } else {
+            omResponse = TwilioUtil.parseResponse("outgoingphonenumber.delete.fail");
         }
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: remove outgoing phone number");
     }
 }

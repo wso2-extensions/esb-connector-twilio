@@ -17,20 +17,18 @@
  */
 package org.wso2.carbon.connector.twilio.application;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.factory.ApplicationFactory;
-import com.twilio.sdk.resource.instance.Application;
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.Application;
+import com.twilio.rest.api.v2010.account.ApplicationCreator;
 
 /*
  * Class mediator for updating an application instance with optional parameters
@@ -41,22 +39,16 @@ public class createApplication extends AbstractConnector {
     public void connect(MessageContext messageContext) {
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: create application");
-        Map<String, String> params = createParameterMap(messageContext);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            // creating a new application under the specified AccountSID
-            ApplicationFactory appFactory = twilioRestClient.getAccount().getApplicationFactory();
-            Application application = appFactory.create(params);
-            OMElement omResponse = TwilioUtil.parseResponse("application.create.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_APPLICATION_SID,
-                    application.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0002", messageContext);
-            throw new SynapseException(e);
-        }
+        TwilioUtil.initTwilio(messageContext);
+        // creating a new application under the specified AccountSID
+        ApplicationCreator applicationCreator = getApplicationCreator(messageContext);
+        Application application = applicationCreator.create();
+        OMElement omResponse = TwilioUtil.parseResponse("application.create.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_APPLICATION_SID,
+                application.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: create application");
     }
 
@@ -66,14 +58,12 @@ public class createApplication extends AbstractConnector {
      *
      * @return The map containing the defined parameters
      */
-    private Map<String, String> createParameterMap(MessageContext messageContext) {
-        // Required
+    private ApplicationCreator getApplicationCreator(MessageContext messageContext) {
+        ApplicationCreator applicationCreator = Application.creator();
+        // optional parameters for creating the application
         String friendlyName =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_FRIENDLY_NAME);
-        // optional parameters for creating the application retrieved by the
-        // Sid. See
-        // http://www.twilio.com/docs/api/rest/applications#list-post-optional-parameters
         String apiVersion =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_API_VERSION);
@@ -114,50 +104,49 @@ public class createApplication extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_SMS_STATUS_CALLBACK);
 
-        // creating the map for optional parameters
-        Map<String, String> params = new HashMap<String, String>();
-        params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
-
         // null-checking and addition to map
+        if (friendlyName != null) {
+            applicationCreator.setFriendlyName(friendlyName);
+        }
         if (apiVersion != null) {
-            params.put(TwilioUtil.TWILIO_API_VERSION, apiVersion);
+            applicationCreator.setApiVersion(apiVersion);
         }
         if (voiceUrl != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_URL, voiceUrl);
+            applicationCreator.setVoiceUrl(URI.create(voiceUrl));
         }
         if (voiceMethod != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_METHOD, voiceMethod);
+            applicationCreator.setVoiceMethod(HttpMethod.valueOf(voiceMethod));
         }
         if (voiceFallbackUrl != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_FALLBACKURL, voiceFallbackUrl);
+            applicationCreator.setVoiceFallbackUrl(URI.create(voiceFallbackUrl));
         }
         if (voiceFallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_FALLBACKMETHOD, voiceFallbackMethod);
+            applicationCreator.setVoiceFallbackMethod(HttpMethod.valueOf(voiceFallbackMethod));
         }
         if (statusCallback != null) {
-            params.put(TwilioUtil.TWILIO_STATUS_CALLBACK, statusCallback);
+            applicationCreator.setStatusCallback(URI.create(statusCallback));
         }
         if (statusCallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_STATUS_CALLBACKMETHOD, statusCallbackMethod);
+            applicationCreator.setStatusCallbackMethod(HttpMethod.valueOf(statusCallbackMethod));
         }
         if (voiceCallerIdLookup != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_CALLERID_LOOKUP, voiceCallerIdLookup);
+            applicationCreator.setVoiceCallerIdLookup(Boolean.parseBoolean(voiceCallerIdLookup));
         }
         if (smsUrl != null) {
-            params.put(TwilioUtil.TWILIO_SMS_URL, smsUrl);
+            applicationCreator.setSmsUrl(URI.create(smsUrl));
         }
         if (smsMethod != null) {
-            params.put(TwilioUtil.TWILIO_SMS_METHOD, smsMethod);
+            applicationCreator.setSmsMethod(HttpMethod.valueOf(smsMethod));
         }
         if (smsFallbackUrl != null) {
-            params.put(TwilioUtil.TWILIO_SMS_FALLBACKURL, smsFallbackUrl);
+            applicationCreator.setSmsFallbackUrl(URI.create(smsFallbackUrl));
         }
         if (smsFallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_SMS_FALLBACKMETHOD, smsFallbackMethod);
+            applicationCreator.setSmsFallbackMethod(HttpMethod.valueOf(smsFallbackMethod));
         }
         if (smsStatusCallback != null) {
-            params.put(TwilioUtil.TWILIO_SMS_STATUS_CALLBACK, smsStatusCallback);
+            applicationCreator.setSmsStatusCallback(URI.create(smsStatusCallback));
         }
-        return params;
+        return applicationCreator;
     }
 }

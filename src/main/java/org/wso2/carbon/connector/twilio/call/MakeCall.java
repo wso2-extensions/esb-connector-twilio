@@ -17,21 +17,19 @@
  */
 package org.wso2.carbon.connector.twilio.call;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.factory.CallFactory;
-import com.twilio.sdk.resource.instance.Call;
+import com.twilio.type.PhoneNumber;
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.Call;
+import com.twilio.rest.api.v2010.account.CallCreator;
 
 /*
  * Class mediator for making a call.
@@ -44,35 +42,21 @@ public class MakeCall extends AbstractConnector {
     // http://www.twilio.com/docs/api/rest/making-calls#post-parameters-optional.
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: Make Call");
 
-        Map<String, String> callParams = createParameterMap(messageContext);
+        TwilioUtil.initTwilio(messageContext);
+        CallCreator callCreator = getCallCreator(messageContext);
+        Call call = callCreator.create();
+        OMElement omResponse = TwilioUtil.parseResponse("call.create.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, call.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            CallFactory callFactory = twilioRestClient.getAccount().getCallFactory();
-            Call call = callFactory.create(callParams);
-            OMElement omResponse = TwilioUtil.parseResponse("call.create.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, call.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0003", messageContext);
-            throw new SynapseException(e);
-        }
         log.auditLog("End: Make Call");
     }
 
-    /**
-     * Create a map containing the parameters required to make the call, which
-     * has been defined
-     *
-     * @return The map containing the defined parameters
-     */
-    private Map<String, String> createParameterMap(MessageContext messageContext) {
-
+    private CallCreator getCallCreator(MessageContext messageContext) {
         // These are compulsory
         String to =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_TO);
@@ -105,9 +89,9 @@ public class MakeCall extends AbstractConnector {
         String sendDigits =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_SEND_DIGITS);
-        String ifMachine =
+        String machineDetection =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
-                        TwilioUtil.PARAM_IF_MACHINE);
+                        TwilioUtil.PARAM_MACHINE_DETECTION);
         String timeout =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_IF_TIMEOUT);
@@ -115,44 +99,43 @@ public class MakeCall extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_IF_RECORD);
 
-        Map<String, String> callParams = new HashMap<String, String>();
-        callParams.put(TwilioUtil.TWILIO_TO, to);
-        callParams.put(TwilioUtil.TWILIO_FROM, from);
-        // Only one of the below must be provided
+        CallCreator callCreator;
         if (callUrl != null) {
-            callParams.put(TwilioUtil.TWILIO_URL, callUrl);
+            callCreator = Call.creator(new PhoneNumber(to), new PhoneNumber(from),
+                    URI.create(callUrl));
         } else {
-            callParams.put(TwilioUtil.TWILIO_APPLICATION_SID, applicationSid);
+            callCreator = Call.creator(new PhoneNumber(to), new PhoneNumber(from),
+                    applicationSid);
         }
         // These are optional parameters. Need to check whether the parameters
         // have been defined
         if (method != null) {
-            callParams.put(TwilioUtil.TWILIO_METHOD, method);
+            callCreator.setMethod(HttpMethod.valueOf(method));
         }
         if (fallbackUrl != null) {
-            callParams.put(TwilioUtil.TWILIO_FALLBACK_URL, fallbackUrl);
+            callCreator.setFallbackUrl(URI.create(fallbackUrl));
         }
         if (fallbackMethod != null) {
-            callParams.put(TwilioUtil.TWILIO_FALLBACK_METHOD, fallbackMethod);
+            callCreator.setFallbackMethod(HttpMethod.valueOf(fallbackMethod));
         }
         if (statusCallback != null) {
-            callParams.put(TwilioUtil.TWILIO_STATUS_CALLBACK, statusCallback);
+            callCreator.setStatusCallback(URI.create(statusCallback));
         }
         if (statusCallbackMethod != null) {
-            callParams.put(TwilioUtil.TWILIO_STATUS_CALLBACKMETHOD, statusCallbackMethod);
+            callCreator.setStatusCallbackMethod(HttpMethod.valueOf(statusCallbackMethod));
         }
         if (sendDigits != null) {
-            callParams.put(TwilioUtil.TWILIO_SEND_DIGITS, sendDigits);
+            callCreator.setSendDigits(sendDigits);
         }
-        if (ifMachine != null) {
-            callParams.put(TwilioUtil.TWILIO_IF_MACHINE, ifMachine);
+        if (machineDetection != null) {
+            callCreator.setMachineDetection(machineDetection);
         }
         if (timeout != null) {
-            callParams.put(TwilioUtil.TWILIO_TIMEOUT, timeout);
+            callCreator.setTimeout(Integer.parseInt(timeout));
         }
         if (record != null) {
-            callParams.put(TwilioUtil.TWILIO_RECORD, record);
+            callCreator.setRecord(Boolean.parseBoolean(record));
         }
-        return callParams;
+        return callCreator;
     }
 }

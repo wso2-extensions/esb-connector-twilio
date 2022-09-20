@@ -17,20 +17,19 @@
  */
 package org.wso2.carbon.connector.twilio.phonenumbers;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
  * Class mediator for getting the list of incoming phone numbers.
@@ -40,37 +39,30 @@ import com.twilio.sdk.TwilioRestResponse;
 public class GetOutgoingPhoneNumberList extends AbstractConnector {
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get outgoing phone list");
-        // Parameters for the filters
-        Map<String, String> params = getParameter(messageContext);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_OUTGOING_PHONENUMBER,
-                            "GET", params);
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0005", messageContext);
-            throw new SynapseException(e);
-        }
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_OUTGOING_PHONENUMBER
+        );
+        addQueryParams(request, messageContext);
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: get outgoing phone list");
     }
 
-    private Map<String, String> getParameter(MessageContext messageContext) {
+    private void addQueryParams(Request request, MessageContext messageContext) {
         String friendlyName =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_FRIENDLY_NAME);
@@ -78,14 +70,11 @@ public class GetOutgoingPhoneNumberList extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_PHONENUMBER);
 
-        Map<String, String> params = new HashMap<String, String>();
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            request.addQueryParam(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
         }
         if (phoneNumber != null) {
-            params.put(TwilioUtil.TWILIO_PHONENUMBER, phoneNumber);
+            request.addQueryParam(TwilioUtil.TWILIO_PHONENUMBER, phoneNumber);
         }
-
-        return params;
     }
 }

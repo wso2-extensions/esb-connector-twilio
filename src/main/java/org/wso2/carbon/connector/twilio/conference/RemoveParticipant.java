@@ -19,16 +19,13 @@ package org.wso2.carbon.connector.twilio.conference;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Conference;
-import com.twilio.sdk.resource.instance.Participant;
+import com.twilio.rest.api.v2010.account.conference.Participant;
+import com.twilio.rest.api.v2010.account.conference.ParticipantDeleter;
 
 /*
  * Class mediator for kick a participant from a given conference.
@@ -36,7 +33,7 @@ import com.twilio.sdk.resource.instance.Participant;
  */
 public class RemoveParticipant extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: remove participant");
@@ -48,30 +45,19 @@ public class RemoveParticipant extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_CALL_SID);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
+        TwilioUtil.initTwilio(messageContext);
+        ParticipantDeleter participantDeleter = Participant.deleter(conferenceSid, callSidOfParticipant);
 
-            // Get the conference
-            Conference conference = twilioRestClient.getAccount().getConference(conferenceSid);
-
-            // Get the participant by his call sid.
-            // Refer https://www.twilio.com/docs/api/rest/participant
-            Participant participant = conference.getParticipant(callSidOfParticipant);
-            // kick the participant
-            OMElement omResponse = null;
-            if (participant.kick()) {
-                omResponse = TwilioUtil.parseResponse("participant.delete.success");
-            } else {
-                omResponse = TwilioUtil.parseResponse("participant.delete.fail");
-            }
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CONFERENCE_SID, conference.getSid());
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, participant.getCallSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0004", messageContext);
-            throw new SynapseException(e);
+        OMElement omResponse;
+        if (participantDeleter.delete()) {
+            omResponse = TwilioUtil.parseResponse("participant.delete.success");
+        } else {
+            omResponse = TwilioUtil.parseResponse("participant.delete.fail");
         }
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CONFERENCE_SID, conferenceSid);
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, callSidOfParticipant);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: remove participant");
     }
 }

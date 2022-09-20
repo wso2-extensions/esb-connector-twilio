@@ -17,20 +17,19 @@
  */
 package org.wso2.carbon.connector.twilio.call;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
  * Class mediator for getting a recording instance list
@@ -40,49 +39,49 @@ import com.twilio.sdk.TwilioRestResponse;
 public class GetRecordingList extends AbstractConnector {
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get recording list");
-        // Get parameters from the messageContext
+
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_RECORDINGS
+        );
+        addQueryParams(request, messageContext);
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
+        log.auditLog("End: get recording list");
+    }
+
+    private void addQueryParams(final Request request, MessageContext messageContext) {
         String callSid =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_CALL_SID);
+        String conferenceSid =
+                (String) ConnectorUtils.lookupTemplateParamater(messageContext,
+                        TwilioUtil.PARAM_CONFERENCE_SID);
         String dateCreated =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_DATE_CREATED);
 
-        Map<String, String> params = new HashMap<String, String>();
-
         if (dateCreated != null) {
-            params.put(TwilioUtil.TWILIO_DATECREATED, dateCreated);
+            request.addQueryParam(TwilioUtil.PARAM_DATE_CREATED, dateCreated);
         }
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response = null;
-            if (callSid != null) {
-                response =
-                        twilioRestClient.request(TwilioUtil.API_URL + "/" +
-                                TwilioUtil.API_VERSION + "/" +
-                                TwilioUtil.API_ACCOUNTS + "/" +
-                                twilioRestClient.getAccountSid() + "/" +
-                                TwilioUtil.API_CALLS + "/" + callSid + "/" +
-                                TwilioUtil.API_RECORDINGS, "GET", params);
-            } else {
-                response =
-                        twilioRestClient.request(TwilioUtil.API_URL + "/" +
-                                TwilioUtil.API_VERSION + "/" +
-                                TwilioUtil.API_ACCOUNTS + "/" +
-                                twilioRestClient.getAccountSid() + "/" +
-                                TwilioUtil.API_RECORDINGS, "GET", params);
-            }
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0003", messageContext);
-            throw new SynapseException(e);
+        if (callSid != null) {
+            request.addQueryParam(TwilioUtil.PARAM_CALL_SID, callSid);
         }
-        log.auditLog("End: get recording list");
+
+        if (conferenceSid != null) {
+            request.addQueryParam(TwilioUtil.PARAM_CONFERENCE_SID, conferenceSid);
+        }
     }
 }

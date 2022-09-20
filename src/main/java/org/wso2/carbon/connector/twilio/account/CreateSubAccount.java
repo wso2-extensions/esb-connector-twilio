@@ -17,21 +17,15 @@
  */
 package org.wso2.carbon.connector.twilio.account;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.factory.AccountFactory;
-import com.twilio.sdk.resource.instance.Account;
+import com.twilio.rest.api.v2010.Account;
+import com.twilio.rest.api.v2010.AccountCreator;
 
 /*
  * Class mediator for creating a sub-account
@@ -39,36 +33,25 @@ import com.twilio.sdk.resource.instance.Account;
  */
 public class CreateSubAccount extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: create account");
         String friendlyName =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_FRIENDLY_NAME);
 
-        // Build a filter for the AccountList
-        Map<String, String> params = new HashMap<String, String>();
+        TwilioUtil.initTwilio(messageContext);
+        AccountCreator accountCreator = Account.creator();
 
-        // If a friendly name has been provided for the account;
-        // if not will use the current date and time (Default by Twilio).
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            accountCreator.setFriendlyName(friendlyName);
         }
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
+        Account account = accountCreator.create();
+        OMElement omResponse = TwilioUtil.parseResponse("account.create.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.TWILIO_ACCOUNT_SID, account.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
 
-            AccountFactory accountFactory = twilioRestClient.getAccountFactory();
-            Account account = accountFactory.create(params);
-
-            OMElement omResponse = TwilioUtil.parseResponse("account.create.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.TWILIO_ACCOUNT_SID, account.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0001", messageContext);
-            throw new SynapseException(e);
-        }
         log.auditLog("End: create account");
     }
 }

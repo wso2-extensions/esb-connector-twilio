@@ -28,21 +28,17 @@ import org.apache.axiom.om.OMNamespace;
 import org.apache.axiom.om.util.AXIOMUtil;
 import org.apache.axiom.soap.SOAPBody;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseConstants;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
-import org.wso2.carbon.connector.core.ConnectException;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.Response;
 
 public class TwilioUtil {
 
-    public static final String API_URL = "https://api.twilio.com";
+    public static final String API_URL = "/2010-04-01/Accounts";
     public static final String API_VERSION = "2010-04-01";
-    public static final String API_ACCOUNTS = "Accounts";
     public static final String API_SMS_SHORTCODES = "SMS/ShortCodes";
-    public static final String API_SMS_MESSAGES = "SMS/Messages";
+    public static final String API_SMS_MESSAGES = "Messages";
     public static final String API_AVAILABLE_PHONE_NUMBERS = "AvailablePhoneNumbers";
     public static final String API_TOLLFREE = "TollFree";
     public static final String API_LOCAL = "Local";
@@ -75,6 +71,8 @@ public class TwilioUtil {
     public static final String PARAM_URL = "url";
     public static final String PARAM_METHOD = "method";
     public static final String PARAM_DATESENT = "dateSent";
+    public static final String PARAM_DATESENTAFTER = "dateSentAfter";
+    public static final String PARAM_DATESENTBEFORE = "dateSentBefore";
     public static final String PARAM_BODY = "body";
     public static final String PARAM_STATUS_CALLBACK_URL = "statusCallBackUrl";
     public static final String PARAM_APPLICATION_SID = "applicationSid";
@@ -109,7 +107,7 @@ public class TwilioUtil {
     public static final String PARAM_DISTANCE = "distance";
     public static final String PARAM_PHONENUMBER = "phoneNumber";
     public static final String PARAM_SEND_DIGITS = "sendDigits";
-    public static final String PARAM_IF_MACHINE = "ifMachine";
+    public static final String PARAM_MACHINE_DETECTION = "machineDetection";
     public static final String PARAM_IF_TIMEOUT = "timeout";
     public static final String PARAM_IF_RECORD = "record";
     public static final String PARAM_CALL_SID = "callSid";
@@ -121,6 +119,8 @@ public class TwilioUtil {
     public static final String PARAM_PARENT_CALL_SID = "parentCallSid";
     public static final String PARAM_CONFERENCE_SID = "conferenceSid";
     public static final String PARAM_MUTED = "muted";
+    public static final String PARAM_HOLD = "hold";
+    public static final String PARAM_COACHING = "coaching";
     public static final String PARAM_QUEUE_SID = "queueSid";
     public static final String PARAM_MAX_SIZE = "maxSize";
     public static final String PARAM_AUTHORIZED_CONNECT_APP_SID = "authorizedConnectAppSid";
@@ -136,7 +136,6 @@ public class TwilioUtil {
     public static final String PARAM_CALL_DELAY = "callDelay";
     public static final String PARAM_EXTENSION = "extension";
     public static final String PARAM_OUTGOING_CALLERID = "outgoingCallerId";
-    public static final String PARAM_CATEGORY = "category";
     public static final String PARAM_START_DATE = "startDate";
     public static final String PARAM_END_DATE = "endDate";
     public static final String PARAM_RECURRING = "recurring";
@@ -146,33 +145,13 @@ public class TwilioUtil {
     public static final String PARAM_CALLBACK_URL = "callbackUrl";
     public static final String PARAM_CALLBACK_METHOD = "callbackMethod";
     public static final String PARAM_TRIGGER_VALUE = "triggerValue";
-
     public static final String TWILIO_FRIENDLY_NAME = "FriendlyName";
-    public static final String TWILIO_MAX_SIZE = "MaxSize";
     public static final String TWILIO_STATUS = "Status";
     public static final String TWILIO_SHORT_CODE = "ShortCode";
     public static final String TWILIO_TO = "To";
     public static final String TWILIO_FROM = "From";
-    public static final String TWILIO_URL = "Url";
     public static final String TWILIO_DATESENT = "DateSent";
-    public static final String TWILIO_BODY = "Body";
-    public static final String TWILIO_APPLICATION_SID = "ApplicationSid";
-    public static final String TWILIO_STATUS_CALLBACK = "StatusCallback";
-    public static final String TWILIO_API_VERSION = "ApiVersion";
-    public static final String TWILIO_SMS_URL = "SmsUrl";
-    public static final String TWILIO_SMS_METHOD = "SmsMethod";
-    public static final String TWILIO_SMS_FALLBACKURL = "SmsFallbackUrl";
-    public static final String TWILIO_SMS_FALLBACKMETHOD = "SmsFallbackMethod";
-    public static final String TWILIO_VOICE_URL = "VoiceUrl";
-    public static final String TWILIO_VOICE_METHOD = "VoiceMethod";
-    public static final String TWILIO_VOICE_FALLBACKURL = "VoiceFallbackUrl";
-    public static final String TWILIO_VOICE_FALLBACKMETHOD = "VoiceFallbackMethod";
-    public static final String TWILIO_STATUS_CALLBACKMETHOD = "StatusCallbackMethod";
-    public static final String TWILIO_VOICE_CALLERID_LOOKUP = "VoiceCallerIdLookup";
-    public static final String TWILIO_VOICE_APPLICATION_SID = "VoiceApplicationSid";
-    public static final String TWILIO_SMS_APPLICATION_SID = "SmsApplicationSid";
     public static final String TWILIO_ACCOUNT_SID = "AccountSid";
-    public static final String TWILIO_CALL_SID = "CallSid";
     public static final String TWILIO_AREACODE = "AreaCode";
     public static final String TWILIO_CONTAINS = "Contains";
     public static final String TWILIO_IN_REGION = "InRegion";
@@ -183,56 +162,33 @@ public class TwilioUtil {
     public static final String TWILIO_IN_RATE_CENTER = "InRateCenter";
     public static final String TWILIO_DISTANCE = "Distance";
     public static final String TWILIO_PHONENUMBER = "PhoneNumber";
-    public static final String TWILIO_METHOD = "Method";
-    public static final String TWILIO_FALLBACK_URL = "FallbackUrl";
-    public static final String TWILIO_FALLBACK_METHOD = "FallbackMethod";
-    public static final String TWILIO_SEND_DIGITS = "SendDigits";
-    public static final String TWILIO_IF_MACHINE = "IfMachine";
-    public static final String TWILIO_TIMEOUT = "Timeout";
-    public static final String TWILIO_RECORD = "Record";
     public static final String TWILIO_STARTTIME = "StartTime";
     public static final String TWILIO_PARENT_CALL_SID = "ParentCallSid";
     public static final String TWILIO_DATECREATED = "DateCreated";
     public static final String TWILIO_DATEUPDATED = "DateUpdated";
     public static final String TWILIO_MUTED = "Muted";
-    public static final String TWILIO_SMS_STATUS_CALLBACK = "SmsStatusCallback";
-    public static final String TWILIO_AUTHORIZED_REDIRECT_URL = "AuthorizeRedirectUrl";
-    public static final String TWILIO_DEAUTHORIZED_CALLBACK_URL = "DeauthorizeCallbackUrl";
-    public static final String TWILIO_DEAUTHORIZED_CALLBACK_METHOD = "DeauthorizeCallbackMethod";
-    public static final String TWILIO_PERMISSIONS = "Permissions";
-    public static final String TWILIO_DESCRIPTION = "Description";
-    public static final String TWILIO_COMPANYNAME = "CompanyName";
-    public static final String TWILIO_HOMEPAGE_URL = "HomepageUrl";
-    public static final String TWILIO_CALL_DELAY = "CallDelay";
-    public static final String TWILIO_EXTENSION = "Extension";
+    public static final String TWILIO_HOLD = "Hold";
+    public static final String TWILIO_COACHING = "Coaching";
     public static final String TWILIO_CATEGORY = "Category";
     public static final String TWILIO_START_DATE = "StartDate";
     public static final String TWILIO_END_DATE = "EndDate";
     public static final String TWILIO_RECURRING = "Recurring";
     public static final String TWILIO_USAGE_CATEGORY = "UsageCategory";
     public static final String TWILIO_TRIGGERBY = "TriggerBy";
-    public static final String TWILIO_CALLBACK_URL = "CallbackUrl";
-    public static final String TWILIO_CALLBACK_METHOD = "CallbackMethod";
-    public static final String TWILIO_TRIGGER_VALUE = "TriggerValue";
 
     private static final OMFactory fac = OMAbstractFactory.getOMFactory();
     private static final OMNamespace omNs = fac.createOMNamespace("http://wso2.org/twilio/adaptor",
             "twilio");
 
-    public synchronized static TwilioRestClient getTwilioRestClient(MessageContext messageContext)
-            throws ConnectException {
-        // Authorization details
-        // Get parameters from the messageContext
-        // Getting Transport Headers
+    public static synchronized void initTwilio(MessageContext messageContext) {
         Axis2MessageContext axis2smc = (Axis2MessageContext) messageContext;
-        axis2smc.getAxis2MessageContext();
         String accountSid =
                 (String) axis2smc.getAxis2MessageContext().getOperationContext()
                         .getProperty("twilio.accountSid");
         String authToken =
                 (String) axis2smc.getAxis2MessageContext().getOperationContext()
                         .getProperty("twilio.authToken");
-        return new TwilioRestClient(accountSid, authToken);
+        Twilio.init(accountSid, authToken);
     }
 
     public static OMElement parseResponse(String strMessageKey) {
@@ -248,7 +204,7 @@ public class TwilioUtil {
         Properties prop = new Properties();
         try {
             prop.load(TwilioUtil.class.getResourceAsStream("/messages/message.properties"));
-            return (String) prop.getProperty(strMessageKey);
+            return prop.getProperty(strMessageKey);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -269,10 +225,10 @@ public class TwilioUtil {
         return omElement;
     }
 
-    public static OMElement parseResponse(TwilioRestResponse restResponse) {
+    public static OMElement parseResponse(Response restResponse) {
         OMElement omElement;
         try {
-            omElement = AXIOMUtil.stringToOM(restResponse.getResponseText());
+            omElement = AXIOMUtil.stringToOM(restResponse.getContent());
         } catch (Exception e) {
             omElement = fac.createOMElement("error", omNs);
             OMElement subValue = fac.createOMElement("errorMessage", omNs);
@@ -300,12 +256,5 @@ public class TwilioUtil {
         subValue.addChild(fac.createOMText(omElement, e.getMessage()));
         omElement.addChild(subValue);
         preparePayload(messageContext, omElement);
-    }
-
-    public static void handleException(Exception e, String erroCode, MessageContext messageContext) {
-        messageContext.setProperty(SynapseConstants.ERROR_EXCEPTION, e);
-        messageContext.setProperty(SynapseConstants.ERROR_MESSAGE, e.getMessage());
-        messageContext.setProperty(SynapseConstants.ERROR_CODE, erroCode);
-        preparePayload(messageContext, e);
     }
 }

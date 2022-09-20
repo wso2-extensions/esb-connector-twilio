@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  * 
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -17,20 +17,18 @@
  */
 package org.wso2.carbon.connector.twilio.phonenumbers;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.IncomingPhoneNumber;
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
+import com.twilio.rest.api.v2010.account.IncomingPhoneNumberUpdater;
 
 /*
  * Class mediator for getting the list of incoming phone numbers.
@@ -40,7 +38,7 @@ import com.twilio.sdk.resource.instance.IncomingPhoneNumber;
 public class UpdateIncomingPhoneNumber extends AbstractConnector {
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: update phone number");
@@ -49,24 +47,15 @@ public class UpdateIncomingPhoneNumber extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_INCOMING_PHONE_SID);
 
-        Map<String, String> params = getParameters(messageContext);
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            // Get an incoming phone number allocated to the Twilio account by
-            // its sid
-            IncomingPhoneNumber number =
-                    twilioRestClient.getAccount()
-                            .getIncomingPhoneNumber(incomingPhoneNumberSid);
-            number.update(params);
+        TwilioUtil.initTwilio(messageContext);
+        IncomingPhoneNumberUpdater incomingPhoneNumberUpdater = getIncomingPhoneNumberUpdater(
+                messageContext, incomingPhoneNumberSid);
+        IncomingPhoneNumber incomingPhoneNumber = incomingPhoneNumberUpdater.update();
 
-            OMElement omResponse = TwilioUtil.parseResponse("phonenumber.update.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_INCOMING_PHONE_SID, number.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0005", messageContext);
-            throw new SynapseException(e);
-        }
+        OMElement omResponse = TwilioUtil.parseResponse("phonenumber.update.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_INCOMING_PHONE_SID, incomingPhoneNumber.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: update phone number");
     }
 
@@ -76,8 +65,9 @@ public class UpdateIncomingPhoneNumber extends AbstractConnector {
      *
      * @param messageContext SynapseMessageContext
      */
-    private Map<String, String> getParameters(MessageContext messageContext) {
-
+    private IncomingPhoneNumberUpdater getIncomingPhoneNumberUpdater(MessageContext messageContext,
+                                                                     String incomingPhoneNumberSid) {
+        IncomingPhoneNumberUpdater incomingPhoneNumberUpdater = IncomingPhoneNumber.updater(incomingPhoneNumberSid);
         // Parameters to be updated
         String friendlyName =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
@@ -128,57 +118,55 @@ public class UpdateIncomingPhoneNumber extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_ACCOUNT_SID);
 
-        Map<String, String> params = new HashMap<String, String>();
-
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            incomingPhoneNumberUpdater.setFriendlyName(friendlyName);
         }
 
         if (apiVersion != null) {
-            params.put(TwilioUtil.TWILIO_API_VERSION, apiVersion);
+            incomingPhoneNumberUpdater.setApiVersion(apiVersion);
         }
         if (voiceUrl != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_URL, voiceUrl);
+            incomingPhoneNumberUpdater.setVoiceUrl(URI.create(voiceUrl));
         }
         if (voiceMethod != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_METHOD, voiceMethod);
+            incomingPhoneNumberUpdater.setVoiceMethod(HttpMethod.valueOf(voiceMethod));
         }
         if (voiceFallbackUrl != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_FALLBACKURL, voiceFallbackUrl);
+            incomingPhoneNumberUpdater.setVoiceFallbackUrl(URI.create(voiceFallbackUrl));
         }
         if (voiceFallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_FALLBACKMETHOD, voiceFallbackMethod);
+            incomingPhoneNumberUpdater.setVoiceFallbackMethod(HttpMethod.valueOf(voiceFallbackMethod));
         }
         if (statusCallback != null) {
-            params.put(TwilioUtil.TWILIO_STATUS_CALLBACK, statusCallback);
+            incomingPhoneNumberUpdater.setStatusCallback(URI.create(statusCallback));
         }
         if (statusCallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_STATUS_CALLBACKMETHOD, statusCallbackMethod);
+            incomingPhoneNumberUpdater.setStatusCallbackMethod(HttpMethod.valueOf(statusCallbackMethod));
         }
         if (voiceCallerIdLookup != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_CALLERID_LOOKUP, voiceCallerIdLookup);
+            incomingPhoneNumberUpdater.setVoiceCallerIdLookup(Boolean.parseBoolean(voiceCallerIdLookup));
         }
         if (voiceApplicationSid != null) {
-            params.put(TwilioUtil.TWILIO_VOICE_APPLICATION_SID, voiceApplicationSid);
+            incomingPhoneNumberUpdater.setVoiceApplicationSid(voiceApplicationSid);
         }
         if (smsUrl != null) {
-            params.put(TwilioUtil.TWILIO_SMS_URL, smsUrl);
+            incomingPhoneNumberUpdater.setSmsUrl(URI.create(smsUrl));
         }
         if (smsMethod != null) {
-            params.put(TwilioUtil.TWILIO_SMS_METHOD, smsMethod);
+            incomingPhoneNumberUpdater.setSmsMethod(HttpMethod.valueOf(smsMethod));
         }
         if (smsFallbackUrl != null) {
-            params.put(TwilioUtil.TWILIO_SMS_FALLBACKURL, smsFallbackUrl);
+            incomingPhoneNumberUpdater.setSmsFallbackUrl(URI.create(smsFallbackUrl));
         }
         if (smsFallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_SMS_FALLBACKMETHOD, smsFallbackMethod);
+            incomingPhoneNumberUpdater.setSmsFallbackMethod(HttpMethod.valueOf(smsFallbackMethod));
         }
         if (smsApplicationSid != null) {
-            params.put(TwilioUtil.TWILIO_SMS_APPLICATION_SID, smsApplicationSid);
+            incomingPhoneNumberUpdater.setSmsApplicationSid(smsApplicationSid);
         }
         if (accountSid != null) {
-            params.put(TwilioUtil.TWILIO_ACCOUNT_SID, accountSid);
+            incomingPhoneNumberUpdater.setAccountSid(accountSid);
         }
-        return params;
+        return incomingPhoneNumberUpdater;
     }
 }

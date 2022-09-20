@@ -17,20 +17,20 @@
  */
 package org.wso2.carbon.connector.twilio.call;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
+
 
 /*
  * Class mediator for getting a Call instance based on its Sid.
@@ -39,36 +39,31 @@ import com.twilio.sdk.TwilioRestResponse;
 public class GetCallList extends AbstractConnector {
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get call list");
-        Map<String, String> params = getParameters(messageContext);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_CALLS,
-                            "GET", params);
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0003", messageContext);
-            throw new SynapseException(e);
-        }
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_CALLS
+        );
+        addQueryParams(request, messageContext);
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: get call list");
     }
 
-    private Map<String, String> getParameters(MessageContext messageContext) {
+    private void addQueryParams(final Request request, MessageContext messageContext) {
+
         String to =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_TO);
         String from =
@@ -84,24 +79,21 @@ public class GetCallList extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_PARENT_CALL_SID);
 
-        Map<String, String> params = new HashMap<String, String>();
-
         if (to != null) {
-            params.put(TwilioUtil.TWILIO_TO, to);
+            request.addQueryParam(TwilioUtil.TWILIO_TO, to);
         }
         if (from != null) {
-            params.put(TwilioUtil.TWILIO_FROM, from);
+            request.addQueryParam(TwilioUtil.TWILIO_FROM, from);
         }
         if (status != null) {
-            params.put(TwilioUtil.TWILIO_STATUS, status);
+            request.addQueryParam(TwilioUtil.TWILIO_STATUS, status);
         }
         if (startTime != null) {
-            params.put(TwilioUtil.TWILIO_STARTTIME, startTime);
+            request.addQueryParam(TwilioUtil.TWILIO_STARTTIME, startTime);
         }
         if (parentCallSid != null) {
-            params.put(TwilioUtil.TWILIO_PARENT_CALL_SID, parentCallSid);
+            request.addQueryParam(TwilioUtil.TWILIO_PARENT_CALL_SID, parentCallSid);
         }
-        return params;
     }
 
 }
