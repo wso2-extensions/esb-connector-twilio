@@ -17,20 +17,19 @@
  */
 package org.wso2.carbon.connector.twilio.phonenumbers;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
  * Class mediator for getting available local numbers in an account.
@@ -39,50 +38,35 @@ import com.twilio.sdk.TwilioRestResponse;
  */
 public class GetAvailableLocalNumbers extends AbstractConnector {
 
-    // Basic filter parameters
-    // See
-    // http://www.twilio.com/docs/api/rest/available-phone-numbers#local-get-basic-filters
-
-    // Advance filter parameters (only for numbers in the Unites States and
-    // Canada).
-    // See
-    // https://www.twilio.com/docs/api/rest/available-phone-numbers#local-get-advanced-filters
-
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get available local numbers");
-        Map<String, String> params = getParameter(messageContext);
+
         String country =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_COUNTRY);
-        try {
 
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_AVAILABLE_PHONE_NUMBERS +
-                                    "/" + country + "/" +
-                                    TwilioUtil.API_LOCAL,
-                            "GET", params);
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e);
-            TwilioUtil.handleException(e, "0005", messageContext);
-            throw new SynapseException(e);
-        }
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_AVAILABLE_PHONE_NUMBERS +
+                        "/" + country + "/" +
+                        TwilioUtil.API_LOCAL
+        );
+        addQueryParams(request, messageContext);
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: get available local numbers");
     }
-
-    private Map<String, String> getParameter(MessageContext messageContext) {
+    private void addQueryParams(Request request, MessageContext messageContext) {
         String areaCode =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_AREACODE);
@@ -111,34 +95,33 @@ public class GetAvailableLocalNumbers extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_DISTANCE);
 
-        Map<String, String> params = new HashMap<String, String>();
         if (areaCode != null) {
-            params.put(TwilioUtil.TWILIO_AREACODE, areaCode);
+            request.addQueryParam(TwilioUtil.TWILIO_AREACODE, areaCode);
         }
         if (contains != null) {
-            params.put(TwilioUtil.TWILIO_CONTAINS, contains);
+            request.addQueryParam(TwilioUtil.TWILIO_CONTAINS, contains);
         }
         if (region != null) {
-            params.put(TwilioUtil.TWILIO_IN_REGION, region);
+            request.addQueryParam(TwilioUtil.TWILIO_IN_REGION, region);
         }
         if (postalCode != null) {
-            params.put(TwilioUtil.TWILIO_IN_POSTAL_CODE, postalCode);
+            request.addQueryParam(TwilioUtil.TWILIO_IN_POSTAL_CODE, postalCode);
         }
         if (nearLat != null) {
-            params.put(TwilioUtil.TWILIO_NEAR_LAT_LONG, nearLat);
+            request.addQueryParam(TwilioUtil.TWILIO_NEAR_LAT_LONG, nearLat);
         }
         if (nearNumber != null) {
-            params.put(TwilioUtil.TWILIO_NEAR_NUMBER, nearNumber);
+            request.addQueryParam(TwilioUtil.TWILIO_NEAR_NUMBER, nearNumber);
         }
         if (inLata != null) {
-            params.put(TwilioUtil.TWILIO_IN_LATA, inLata);
+            request.addQueryParam(TwilioUtil.TWILIO_IN_LATA, inLata);
         }
         if (inRateCenter != null) {
-            params.put(TwilioUtil.TWILIO_IN_RATE_CENTER, inRateCenter);
+            request.addQueryParam(TwilioUtil.TWILIO_IN_RATE_CENTER, inRateCenter);
         }
         if (distance != null) {
-            params.put(TwilioUtil.TWILIO_DISTANCE, distance);
+            request.addQueryParam(TwilioUtil.TWILIO_DISTANCE, distance);
         }
-        return params;
+
     }
 }

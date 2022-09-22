@@ -17,20 +17,18 @@
  */
 package org.wso2.carbon.connector.twilio.sms;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.ShortCode;
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.ShortCode;
+import com.twilio.rest.api.v2010.account.ShortCodeUpdater;
 
 /*
  * Class mediator for updating the properties of a short code.
@@ -38,7 +36,7 @@ import com.twilio.sdk.resource.instance.ShortCode;
  */
 public class UpdateShortCodeProperties extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: update short code properties");
@@ -65,41 +63,31 @@ public class UpdateShortCodeProperties extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_SMS_FALLBACKURL);
 
-        // optional parameters passed through this map
-        Map<String, String> params = new HashMap<String, String>();
-
+        TwilioUtil.initTwilio(messageContext);
+        ShortCodeUpdater shortCodeUpdater = ShortCode.updater(shortCodeSid);
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            shortCodeUpdater.setFriendlyName(friendlyName);
         }
         if (apiVersion != null) {
-            params.put(TwilioUtil.TWILIO_API_VERSION, apiVersion);
+            shortCodeUpdater.setApiVersion(apiVersion);
         }
         if (smsUrl != null) {
-            params.put(TwilioUtil.TWILIO_SMS_URL, smsUrl);
+            shortCodeUpdater.setSmsUrl(URI.create(smsUrl));
         }
         if (smsMethod != null) {
-            params.put(TwilioUtil.TWILIO_SMS_METHOD, smsMethod);
+            shortCodeUpdater.setSmsMethod(HttpMethod.valueOf(smsMethod));
         }
         if (smsFallBackUrl != null) {
-            params.put(TwilioUtil.TWILIO_SMS_FALLBACKURL, smsFallBackUrl);
+            shortCodeUpdater.setSmsFallbackUrl(URI.create(smsFallBackUrl));
         }
         if (smsFallBackMethod != null) {
-            params.put(TwilioUtil.TWILIO_SMS_FALLBACKMETHOD, smsFallBackMethod);
+            shortCodeUpdater.setSmsFallbackMethod(HttpMethod.valueOf(smsFallBackMethod));
         }
+        ShortCode shortCode =shortCodeUpdater.update();
+        OMElement omResponse = TwilioUtil.parseResponse("shortcode.update.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_SHORTCODE_SID, shortCode.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            ShortCode shortCode = twilioRestClient.getAccount().getShortCode(shortCodeSid);
-            shortCode.update(params);
-
-            OMElement omResponse = TwilioUtil.parseResponse("shortcode.update.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_SHORTCODE_SID, shortCode.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0007", messageContext);
-            throw new SynapseException(e);
-        }
         log.auditLog("End: update short code properties");
     }
 }

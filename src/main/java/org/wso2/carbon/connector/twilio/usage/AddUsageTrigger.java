@@ -17,84 +17,74 @@
  */
 package org.wso2.carbon.connector.twilio.usage;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Account;
-import com.twilio.sdk.resource.instance.UsageTrigger;
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.usage.Trigger;
+import com.twilio.rest.api.v2010.account.usage.TriggerCreator;
 
 /*
- * Class mediator for getting a an USAGE triggers
+ * Class mediator for getting a USAGE triggers
  * For more information, see http://www.twilio.com/docs/api/rest/usage-triggers
  */
 public class AddUsageTrigger extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: create usage trigger");
 
-        Map<String, String> params = getParams(messageContext);
+        TwilioUtil.initTwilio(messageContext);
+        TriggerCreator triggerCreator = getTriggerCreator(messageContext);
+        Trigger trigger = triggerCreator.create();
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            Account account = twilioRestClient.getAccount();
-            UsageTrigger usageTrigger = account.getUsageTriggerFactory().create(params);
-            OMElement omResponse = TwilioUtil.parseResponse("usagetrigger.create.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_USAGE_TRIGGER_SID,
-                    usageTrigger.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0008", messageContext);
-            throw new SynapseException(e);
-        }
+        OMElement omResponse = TwilioUtil.parseResponse("usagetrigger.create.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_USAGE_TRIGGER_SID,
+                trigger.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: create usage trigger");
     }
 
-    private Map<String, String> getParams(MessageContext messageContext) {
+    private TriggerCreator getTriggerCreator(MessageContext messageContext) {
 
-        String usageCategory = (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_USAGE_CATEGORY);
-        String triggerValue = (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_TRIGGER_VALUE);
-        String callbackUrl = (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_CALLBACK_URL);
-        String friendlyName = (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_FRIENDLY_NAME);
-        String triggerBy = (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_TRIGGERBY);
-        String recurring = (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_RECURRING);
-        String callbackMethod = (String) ConnectorUtils.lookupTemplateParamater(messageContext, TwilioUtil.PARAM_CALLBACK_METHOD);
+        String usageCategory = (String) ConnectorUtils.lookupTemplateParamater(
+                messageContext, TwilioUtil.PARAM_USAGE_CATEGORY);
+        String triggerValue = (String) ConnectorUtils.lookupTemplateParamater(
+                messageContext, TwilioUtil.PARAM_TRIGGER_VALUE);
+        String callbackUrl = (String) ConnectorUtils.lookupTemplateParamater(
+                messageContext, TwilioUtil.PARAM_CALLBACK_URL);
+        String friendlyName = (String) ConnectorUtils.lookupTemplateParamater(
+                messageContext, TwilioUtil.PARAM_FRIENDLY_NAME);
+        String triggerBy = (String) ConnectorUtils.lookupTemplateParamater(
+                messageContext, TwilioUtil.PARAM_TRIGGERBY);
+        String recurring = (String) ConnectorUtils.lookupTemplateParamater(
+                messageContext, TwilioUtil.PARAM_RECURRING);
+        String callbackMethod = (String) ConnectorUtils.lookupTemplateParamater(
+                messageContext, TwilioUtil.PARAM_CALLBACK_METHOD);
 
+        TriggerCreator triggerCreator = Trigger.creator(URI.create(callbackUrl), triggerValue,
+                Trigger.UsageCategory.valueOf(usageCategory));
 
-        Map<String, String> params = new HashMap<String, String>();
-        if (usageCategory != null) {
-            params.put(TwilioUtil.TWILIO_USAGE_CATEGORY, usageCategory);
-        }
-        if (triggerValue != null) {
-            params.put(TwilioUtil.TWILIO_TRIGGER_VALUE, triggerValue);
-        }
-        if (callbackUrl != null) {
-            params.put(TwilioUtil.TWILIO_CALLBACK_URL, callbackUrl);
-        }
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            triggerCreator.setFriendlyName(friendlyName);
         }
         if (triggerBy != null) {
-            params.put(TwilioUtil.TWILIO_TRIGGERBY, triggerBy);
+            triggerCreator.setTriggerBy(Trigger.TriggerField.valueOf(triggerBy));
         }
         if (recurring != null) {
-            params.put(TwilioUtil.TWILIO_RECURRING, recurring);
+            triggerCreator.setRecurring(Trigger.Recurring.valueOf(recurring));
         }
         if (callbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_CALLBACK_METHOD, callbackMethod);
+            triggerCreator.setCallbackMethod(HttpMethod.valueOf(callbackMethod));
         }
-        return params;
+        return triggerCreator;
     }
 }

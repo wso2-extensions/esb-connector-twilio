@@ -17,20 +17,23 @@
  */
 package org.wso2.carbon.connector.twilio.sms;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
  * Class mediator for getting a an SMS resource given its Sid.
@@ -38,7 +41,7 @@ import com.twilio.sdk.TwilioRestResponse;
  */
 public class GetSmsList extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get SMS Status List");
@@ -51,44 +54,43 @@ public class GetSmsList extends AbstractConnector {
         String dateSent =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_DATESENT);
+        String dateSentAfter =
+                (String) ConnectorUtils.lookupTemplateParamater(messageContext,
+                        TwilioUtil.PARAM_DATESENTAFTER);
+        String dateSentBefore =
+                (String) ConnectorUtils.lookupTemplateParamater(messageContext,
+                        TwilioUtil.PARAM_DATESENTBEFORE);
 
-        try {
-            // the map used for passing parameters
-            Map<String, String> params = new HashMap<String, String>();
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_SMS_MESSAGES
+        );
 
-            if (to != null) {
-                params.put(TwilioUtil.TWILIO_TO, to);
-            }
-
-            if (from != null) {
-                params.put(TwilioUtil.TWILIO_FROM, from);
-            }
-
-            if (dateSent != null) {
-                // YYYY-MM-DD
-                params.put(TwilioUtil.TWILIO_DATESENT, dateSent);
-            }
-
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_SMS_MESSAGES,
-                            "GET", params);
-
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0007", messageContext);
-            throw new SynapseException(e);
+        if (to != null) {
+            request.addQueryParam(TwilioUtil.TWILIO_TO, to);
         }
+
+        if (from != null) {
+            request.addQueryParam(TwilioUtil.TWILIO_FROM, from);
+        }
+
+        if (dateSent != null) {
+            request.addQueryParam(TwilioUtil.TWILIO_DATESENT, dateSent);
+        } else if (dateSentAfter != null || dateSentBefore != null) {
+            request.addQueryDateTimeRange(TwilioUtil.TWILIO_DATESENT,
+                    ZonedDateTime.of(LocalDateTime.parse(dateSentAfter), ZoneId.of("UTC")),
+                    ZonedDateTime.of(LocalDateTime.parse(dateSentBefore), ZoneId.of("UTC")));
+        }
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: get SMS Status List");
     }
 }

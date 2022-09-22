@@ -17,21 +17,15 @@
  */
 package org.wso2.carbon.connector.twilio.queue;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.factory.QueueFactory;
-import com.twilio.sdk.resource.instance.Queue;
+import com.twilio.rest.api.v2010.account.Queue;
+import com.twilio.rest.api.v2010.account.QueueCreator;
 
 /*
  * Class mediator for creating a new queue instance.
@@ -39,7 +33,7 @@ import com.twilio.sdk.resource.instance.Queue;
  */
 public class CreateQueue extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: create queue");
@@ -51,26 +45,18 @@ public class CreateQueue extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_MAX_SIZE);
 
-        Map<String, String> params = new HashMap<String, String>();
-        if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
-        }
+        TwilioUtil.initTwilio(messageContext);
+        QueueCreator queueCreator = Queue.creator(friendlyName);
+
         if (maxSize != null) {
-            params.put(TwilioUtil.TWILIO_MAX_SIZE, maxSize);
+            queueCreator.setMaxSize(Integer.parseInt(maxSize));
         }
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            QueueFactory queueFactory = twilioRestClient.getAccount().getQueueFactory();
-            Queue queue = queueFactory.create(params);
-            OMElement omResponse = TwilioUtil.parseResponse("queue.create.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_QUEUE_SID, queue.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0006", messageContext);
-            throw new SynapseException(e);
-        }
+        Queue queue = queueCreator.create();
+        OMElement omResponse = TwilioUtil.parseResponse("queue.create.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_QUEUE_SID, queue.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: create queue");
     }
 }

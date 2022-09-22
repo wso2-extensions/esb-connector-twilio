@@ -17,21 +17,15 @@
  */
 package org.wso2.carbon.connector.twilio.conference;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Conference;
-import com.twilio.sdk.resource.instance.Participant;
+import com.twilio.rest.api.v2010.account.conference.Participant;
+import com.twilio.rest.api.v2010.account.conference.ParticipantUpdater;
 
 /*
  * Class mediator for updating a particulars of a participant in a given
@@ -40,7 +34,7 @@ import com.twilio.sdk.resource.instance.Participant;
  */
 public class UpdateParticipant extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: update participant");
@@ -55,31 +49,20 @@ public class UpdateParticipant extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_MUTED);
 
-        Map<String, String> params = new HashMap<String, String>();
+        TwilioUtil.initTwilio(messageContext);
+        ParticipantUpdater participantUpdater = Participant.updater(conferenceSid, callSidOfParticipant);
+
         if (muted != null) {
-            params.put(TwilioUtil.TWILIO_MUTED, muted);
+            participantUpdater.setMuted(Boolean.parseBoolean(muted));
         }
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
 
-            // Get the conference
-            Conference conference = twilioRestClient.getAccount().getConference(conferenceSid);
+        Participant participant = participantUpdater.update();
+        OMElement omResponse = TwilioUtil.parseResponse("participant.update.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CONFERENCE_SID, conferenceSid);
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, participant.getCallSid());
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_MUTED, participant.getMuted());
+        TwilioUtil.preparePayload(messageContext, omResponse);
 
-            // Get the participant by his call sid.
-            // Refer https://www.twilio.com/docs/api/rest/participant
-            Participant participant = conference.getParticipant(callSidOfParticipant);
-            participant.update(params);
-            // kick the participant
-            OMElement omResponse = TwilioUtil.parseResponse("participant.update.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CONFERENCE_SID, conference.getSid());
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, participant.getCallSid());
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_MUTED, participant.isMuted());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0004", messageContext);
-            throw new SynapseException(e);
-        }
         log.auditLog("End: update participant");
 
     }

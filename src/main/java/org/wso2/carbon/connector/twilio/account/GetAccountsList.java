@@ -17,20 +17,19 @@
  */
 package org.wso2.carbon.connector.twilio.account;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
  * Class mediator for retrieving a list of all accounts for an accountSID.
@@ -38,13 +37,25 @@ import com.twilio.sdk.TwilioRestResponse;
  */
 public class GetAccountsList extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext){
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get account");
 
-        // Optional parameters. For more information, see
-        // http://www.twilio.com/docs/api/rest/account#list-get-filters
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(), TwilioUtil.API_URL);
+        addQueryParams(request, messageContext);
+        // Get the AccountList
+        Response response = twilioRestClient.request(request);
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
+        log.auditLog("End: get accounts");
+    }
+
+    private void addQueryParams(Request request, MessageContext messageContext) {
         String friendlyName =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_FRIENDLY_NAME);
@@ -52,37 +63,13 @@ public class GetAccountsList extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_STATUS);
 
-        // Build a filter for the AccountList, i.e. filter parameters are passed
-        // as a Map
-        Map<String, String> filter = new HashMap<String, String>();
-
         if (friendlyName != null) {
-            filter.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            request.addQueryParam(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
         }
+
         if (status != null) {
-            filter.put(TwilioUtil.TWILIO_STATUS, status);
+            request.addQueryParam(TwilioUtil.TWILIO_STATUS, status);
         }
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-
-            // Get the AccountList
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL + "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS,
-                            "GET",
-                            filter);
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-
-            TwilioUtil.preparePayload(messageContext, omResponse);
-
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0001", messageContext);
-            throw new SynapseException(e);
-        }
-        log.auditLog("End: get accounts");
     }
 }

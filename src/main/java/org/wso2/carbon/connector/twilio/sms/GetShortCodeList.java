@@ -17,20 +17,19 @@
  */
 package org.wso2.carbon.connector.twilio.sms;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
  * Class mediator for getting the short code based on the Sid.
@@ -38,10 +37,30 @@ import com.twilio.sdk.TwilioRestResponse;
  */
 public class GetShortCodeList extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get Short Code List");
+
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_SMS_SHORTCODES
+        );
+        addQueryParams(request, messageContext);
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
+        log.auditLog("End: get Short Code List");
+    }
+
+    private void addQueryParams(final Request request, MessageContext messageContext) {
 
         String friendlyName =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
@@ -50,39 +69,12 @@ public class GetShortCodeList extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_SHORTCODE);
 
-        try {
-            // Creates a Map containing the parameters which are needed to be
-            // get list
-            Map<String, String> params = new HashMap<String, String>();
-            if (shortCodeSid != null) {
-                params.put(TwilioUtil.TWILIO_SHORT_CODE, shortCodeSid);
-            }
-            if (friendlyName != null) {
-                params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
-            }
-
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_SMS_SHORTCODES,
-                            "GET", params);
-
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0007", messageContext);
-            throw new SynapseException(e);
+        if (shortCodeSid != null) {
+            request.addQueryParam(TwilioUtil.TWILIO_SHORT_CODE, shortCodeSid);
         }
-        log.auditLog("End: get Short Code List");
+        if (friendlyName != null) {
+            request.addQueryParam(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+        }
     }
 
 }

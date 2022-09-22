@@ -17,19 +17,18 @@
  */
 package org.wso2.carbon.connector.twilio.application;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.ConnectApp;
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.ConnectApp;
+import com.twilio.rest.api.v2010.account.ConnectAppUpdater;
 
 /*
  * Class mediator for updating a connect app instance with optional parameters
@@ -40,24 +39,17 @@ public class updateConnectApp extends AbstractConnector {
     public void connect(MessageContext messageContext) {
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: update connect application");
-        Map<String, String> params = createParameterMap(messageContext);
         String connectSid =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_CONNECT_APP_SID);
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            // Retrieve the matching Connect App based on its Sid
-            ConnectApp connectApp = twilioRestClient.getAccount().getConnectApp(connectSid);
-            // update the relevant connect app with the parameters specified.
-            connectApp.update(params);
-            OMElement omResponse = TwilioUtil.parseResponse("conapp.update.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CONNECT_APP_SID, connectApp.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0002", messageContext);
-            throw new SynapseException(e);
-        }
+
+        TwilioUtil.initTwilio(messageContext);
+        ConnectAppUpdater connectAppUpdater = getConnectAppUpdater(messageContext, connectSid);
+        ConnectApp connectApp = connectAppUpdater.update();
+        OMElement omResponse = TwilioUtil.parseResponse("conapp.update.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CONNECT_APP_SID, connectApp.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: update connect application");
     }
 
@@ -67,8 +59,8 @@ public class updateConnectApp extends AbstractConnector {
      *
      * @return The map containing the defined parameters
      */
-    private Map<String, String> createParameterMap(MessageContext messageContext) {
-        // Required
+    private ConnectAppUpdater getConnectAppUpdater(MessageContext messageContext, String connectSid) {
+        ConnectAppUpdater connectAppUpdater = ConnectApp.updater(connectSid);
         String friendlyName =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_FRIENDLY_NAME);
@@ -94,34 +86,31 @@ public class updateConnectApp extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_HOMEPAGE_URL);
 
-        // creating the map for optional parameters
-        Map<String, String> params = new HashMap<String, String>();
-
         // null-checking and addition to map
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            connectAppUpdater.setFriendlyName(friendlyName);
         }
         if (authorizedRedirectUrl != null) {
-            params.put(TwilioUtil.TWILIO_AUTHORIZED_REDIRECT_URL, authorizedRedirectUrl);
+            connectAppUpdater.setAuthorizeRedirectUrl(URI.create(authorizedRedirectUrl));
         }
         if (deauthorizedCallbackUrl != null) {
-            params.put(TwilioUtil.TWILIO_DEAUTHORIZED_CALLBACK_URL, deauthorizedCallbackUrl);
+            connectAppUpdater.setDeauthorizeCallbackUrl(URI.create(deauthorizedCallbackUrl));
         }
         if (deauthorizedCallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_DEAUTHORIZED_CALLBACK_METHOD, deauthorizedCallbackMethod);
+            connectAppUpdater.setDeauthorizeCallbackMethod(HttpMethod.valueOf(deauthorizedCallbackMethod));
         }
         if (permissions != null) {
-            params.put(TwilioUtil.TWILIO_PERMISSIONS, permissions);
+            connectAppUpdater.setPermissions(ConnectApp.Permission.valueOf(permissions));
         }
         if (description != null) {
-            params.put(TwilioUtil.TWILIO_DESCRIPTION, description);
+            connectAppUpdater.setDescription(description);
         }
         if (companyName != null) {
-            params.put(TwilioUtil.TWILIO_COMPANYNAME, companyName);
+            connectAppUpdater.setCompanyName(companyName);
         }
         if (homepageUrl != null) {
-            params.put(TwilioUtil.TWILIO_HOMEPAGE_URL, homepageUrl);
+            connectAppUpdater.setHomepageUrl(URI.create(homepageUrl));
         }
-        return params;
+        return connectAppUpdater;
     }
 }

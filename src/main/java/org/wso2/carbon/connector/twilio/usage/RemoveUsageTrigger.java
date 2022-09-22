@@ -19,24 +19,21 @@ package org.wso2.carbon.connector.twilio.usage;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Account;
-import com.twilio.sdk.resource.instance.UsageTrigger;
+import com.twilio.rest.api.v2010.account.usage.Trigger;
+import com.twilio.rest.api.v2010.account.usage.TriggerDeleter;
 
 /*
- * Class mediator for getting a an USAGE triggers
+ * Class mediator for getting a USAGE triggers
  * For more information, see http://www.twilio.com/docs/api/rest/usage-triggers
  */
 public class RemoveUsageTrigger extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: remove usage trigger");
@@ -44,24 +41,17 @@ public class RemoveUsageTrigger extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_USAGE_TRIGGER_SID);
 
-        try {
-
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            Account account = twilioRestClient.getAccount();
-            UsageTrigger usageTrigger = account.getUsageTrigger(triggerSid);
-            OMElement omResponse = null;
-            if (usageTrigger.delete()) {
-                omResponse = TwilioUtil.parseResponse("usagetrigger.delete.success");
-            } else {
-                omResponse = TwilioUtil.parseResponse("usagetrigger.delete.fail");
-            }
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_USAGE_TRIGGER_SID, usageTrigger.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0008", messageContext);
-            throw new SynapseException(e);
+        TwilioUtil.initTwilio(messageContext);
+        TriggerDeleter triggerDeleter = Trigger.deleter(triggerSid);
+        OMElement omResponse;
+        if (triggerDeleter.delete()) {
+            omResponse = TwilioUtil.parseResponse("usagetrigger.delete.success");
+        } else {
+            omResponse = TwilioUtil.parseResponse("usagetrigger.delete.fail");
         }
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_USAGE_TRIGGER_SID, triggerSid);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: remove usage trigger");
     }
 }

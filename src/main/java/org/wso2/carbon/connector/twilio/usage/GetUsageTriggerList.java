@@ -17,31 +17,52 @@
  */
 package org.wso2.carbon.connector.twilio.usage;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
- * Class mediator for getting a an USAGE triggers
+ * Class mediator for getting a USAGE triggers
  * For more information, see http://www.twilio.com/docs/api/rest/usage-triggers
  */
 public class GetUsageTriggerList extends AbstractConnector {
 
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: get usage trigger List");
+
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_USAGE +
+                        "/" +
+                        TwilioUtil.API_USAGE_TRIGGERS
+        );
+        this.addQueryParams(request, messageContext);
+        Response response = twilioRestClient.request(request);
+
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
+        log.auditLog("End: get usage trigger List");
+    }
+
+    private void addQueryParams(Request request, MessageContext messageContext) {
         String recurring =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_RECURRING);
@@ -51,41 +72,16 @@ public class GetUsageTriggerList extends AbstractConnector {
         String triggeredBy =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_TRIGGERBY);
-        Map<String, String> params = new HashMap<String, String>();
+
         if (recurring != null) {
-            params.put(TwilioUtil.TWILIO_RECURRING, recurring);
+            request.addQueryParam(TwilioUtil.TWILIO_RECURRING, recurring);
         }
         if (usageCategory != null) {
-            params.put(TwilioUtil.TWILIO_USAGE_CATEGORY, usageCategory);
+            request.addQueryParam(TwilioUtil.TWILIO_USAGE_CATEGORY, usageCategory);
         }
         if (triggeredBy != null) {
-            params.put(TwilioUtil.TWILIO_TRIGGERBY, triggeredBy);
+            request.addQueryParam(TwilioUtil.TWILIO_TRIGGERBY, triggeredBy);
         }
-        try {
-
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_USAGE +
-                                    "/" +
-                                    TwilioUtil.API_USAGE_TRIGGERS,
-                            "GET", params);
-
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0008", messageContext);
-            throw new SynapseException(e);
-        }
-        log.auditLog("End: get usage trigger List");
     }
 }
 

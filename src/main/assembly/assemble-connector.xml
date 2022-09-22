@@ -27,7 +27,9 @@
     <dependencySets>
         <dependencySet>
             <includes>
-                <include>com.twilio.sdk:twilio-java-sdk</include>
+                <include>com.fasterxml.jackson.datatype:jackson-datatype-jsr310</include>
+                <include>com.fasterxml.jackson.core:jackson-databind</include>
+                <include>com.twilio.sdk:twilio</include>
                 <include>org.codehaus.jackson:jackson-core-asl</include>
                 <include>org.codehaus.jackson:jackson-mapper-asl</include>
             </includes>

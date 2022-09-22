@@ -17,20 +17,18 @@
  */
 package org.wso2.carbon.connector.twilio.call;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.instance.Call;
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.Call;
+import com.twilio.rest.api.v2010.account.CallUpdater;
 
 /*
  * Class mediator for modifying a live call.
@@ -40,36 +38,25 @@ import com.twilio.sdk.resource.instance.Call;
 public class ModifyLiveCall extends AbstractConnector {
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: Update Live Call");
 
-        // Must be provided
-        String callSid =
-                (String) ConnectorUtils.lookupTemplateParamater(messageContext,
-                        TwilioUtil.PARAM_CALL_SID);
-        Map<String, String> params = getParameters(messageContext);
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            // Get the call to be modified
-            Call call = twilioRestClient.getAccount().getCall(callSid);
-            // update the matching live call with the specified parameters
-            call.update(params);
-            OMElement omResponse = TwilioUtil.parseResponse("call.update.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, call.getSid());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e);
-            TwilioUtil.handleException(e, "0003", messageContext);
-            throw new SynapseException(e);
-        }
+        TwilioUtil.initTwilio(messageContext);
+        CallUpdater callUpdater = getCallUpdater(messageContext);
+        Call call = callUpdater.update();
+        OMElement omResponse = TwilioUtil.parseResponse("call.update.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, call.getSid());
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: Update Live Call");
     }
 
-    private Map<String, String> getParameters(MessageContext messageContext) {
-        // Optional parameters. For specifications and formats, see
-        // http://www.twilio.com/docs/api/rest/change-call-state
-        // Available parameters to be modified (Optional)
+    private CallUpdater getCallUpdater(MessageContext messageContext) {
+
+        String callSid =
+                (String) ConnectorUtils.lookupTemplateParamater(messageContext,
+                        TwilioUtil.PARAM_CALL_SID);
         String url =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_URL);
@@ -93,29 +80,28 @@ public class ModifyLiveCall extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_STATUS_CALLBACK_METHOD);
 
-        // Map for optional parameters
-        Map<String, String> params = new HashMap<String, String>();
+        CallUpdater callUpdater = Call.updater(callSid);
         if (url != null) {
-            params.put(TwilioUtil.TWILIO_URL, url);
+            callUpdater.setUrl(URI.create(url));
         }
         if (status != null) {
-            params.put(TwilioUtil.TWILIO_STATUS, status);
+            callUpdater.setStatus(Call.UpdateStatus.valueOf(status));
         }
         if (method != null) {
-            params.put(TwilioUtil.TWILIO_METHOD, method);
+            callUpdater.setMethod(HttpMethod.valueOf(method));
         }
         if (fallbackUrl != null) {
-            params.put(TwilioUtil.TWILIO_FALLBACK_URL, fallbackUrl);
+            callUpdater.setFallbackUrl(URI.create(fallbackUrl));
         }
         if (fallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_FALLBACK_METHOD, fallbackMethod);
+            callUpdater.setFallbackMethod(HttpMethod.valueOf(fallbackMethod));
         }
         if (statusCallback != null) {
-            params.put(TwilioUtil.TWILIO_STATUS_CALLBACK, statusCallback);
+            callUpdater.setStatusCallback(URI.create(statusCallback));
         }
         if (statusCallbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_STATUS_CALLBACKMETHOD, statusCallbackMethod);
+            callUpdater.setStatusCallbackMethod(HttpMethod.valueOf(statusCallbackMethod));
         }
-        return params;
+        return callUpdater;
     }
 }

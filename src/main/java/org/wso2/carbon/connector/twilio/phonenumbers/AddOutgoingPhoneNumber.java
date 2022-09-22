@@ -17,21 +17,19 @@
  */
 package org.wso2.carbon.connector.twilio.phonenumbers;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
-import org.wso2.carbon.connector.core.ConnectException;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.factory.OutgoingCallerIdFactory;
-import com.twilio.sdk.resource.instance.CallerIdValidation;
+import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.ValidationRequest;
+import com.twilio.rest.api.v2010.account.ValidationRequestCreator;
+import com.twilio.type.PhoneNumber;
 
 /*
  * Class mediator for purchasing a phone numbers.
@@ -41,33 +39,25 @@ import com.twilio.sdk.resource.instance.CallerIdValidation;
 public class AddOutgoingPhoneNumber extends AbstractConnector {
 
     @Override
-    public void connect(MessageContext messageContext) throws ConnectException {
+    public void connect(MessageContext messageContext) {
 
         SynapseLog log = getLog(messageContext);
         log.auditLog("Start: add outgoing phone number");
-        Map<String, String> params = getParameter(messageContext);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            OutgoingCallerIdFactory numberFactory =
-                    twilioRestClient.getAccount()
-                            .getOutgoingCallerIdFactory();
-            CallerIdValidation number = numberFactory.create(params);
+        TwilioUtil.initTwilio(messageContext);
+        ValidationRequestCreator validationRequestCreator = getValidationRequestCreator(messageContext);
+        ValidationRequest validationRequest = validationRequestCreator.create();
 
-            OMElement omResponse = TwilioUtil.parseResponse("outgoingphonenumber.create.success");
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_PHONENUMBER, number.getPhoneNumber());
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, number.getProperty("call_sid"));
-            TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_VERIFICATION_CODE, number.getValidationCode());
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            TwilioUtil.handleException(e, "0005", messageContext);
-            throw new SynapseException(e);
-        }
+        OMElement omResponse = TwilioUtil.parseResponse("outgoingphonenumber.create.success");
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_PHONENUMBER, validationRequest.getPhoneNumber().toString());
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_CALL_SID, validationRequest.getCallSid());
+        TwilioUtil.addElement(omResponse, TwilioUtil.PARAM_VERIFICATION_CODE, validationRequest.getValidationCode());
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: add outgoing phone number");
     }
 
-    private Map<String, String> getParameter(MessageContext messageContext) {
+    private ValidationRequestCreator getValidationRequestCreator(MessageContext messageContext) {
 
         String phoneNumber =
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
@@ -88,23 +78,23 @@ public class AddOutgoingPhoneNumber extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_STATUS_CALLBACK_METHOD);
 
-        Map<String, String> params = new HashMap<String, String>();
-        params.put(TwilioUtil.TWILIO_PHONENUMBER, phoneNumber);
+        ValidationRequestCreator validationRequestCreator = new ValidationRequestCreator(new PhoneNumber(phoneNumber));
+
         if (friendlyName != null) {
-            params.put(TwilioUtil.TWILIO_FRIENDLY_NAME, friendlyName);
+            validationRequestCreator.setFriendlyName(friendlyName);
         }
         if (callDelay != null) {
-            params.put(TwilioUtil.TWILIO_CALL_DELAY, callDelay);
+            validationRequestCreator.setCallDelay(Integer.parseInt(callDelay));
         }
         if (extension != null) {
-            params.put(TwilioUtil.TWILIO_EXTENSION, extension);
+            validationRequestCreator.setExtension(extension);
         }
         if (callback != null) {
-            params.put(TwilioUtil.TWILIO_STATUS_CALLBACK, callback);
+            validationRequestCreator.setStatusCallback(URI.create(callback));
         }
         if (callbackMethod != null) {
-            params.put(TwilioUtil.TWILIO_STATUS_CALLBACKMETHOD, callbackMethod);
+            validationRequestCreator.setStatusCallbackMethod(HttpMethod.valueOf(callbackMethod));
         }
-        return params;
+        return validationRequestCreator;
     }
 }

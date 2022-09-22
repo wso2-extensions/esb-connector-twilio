@@ -19,14 +19,17 @@ package org.wso2.carbon.connector.twilio.application;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.SynapseException;
 import org.apache.synapse.SynapseLog;
 import org.wso2.carbon.connector.core.AbstractConnector;
 import org.wso2.carbon.connector.core.util.ConnectorUtils;
 import org.wso2.carbon.connector.twilio.util.TwilioUtil;
 
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.TwilioRestResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.Request;
+import com.twilio.http.Response;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.Domains;
 
 /*
  * Class mediator for getting a connect app instance based on the ConnectAppSid
@@ -42,28 +45,21 @@ public class getConnectApp extends AbstractConnector {
                 (String) ConnectorUtils.lookupTemplateParamater(messageContext,
                         TwilioUtil.PARAM_CONNECT_APP_SID);
 
-        try {
-            TwilioRestClient twilioRestClient = TwilioUtil.getTwilioRestClient(messageContext);
-            TwilioRestResponse response =
-                    twilioRestClient.request(TwilioUtil.API_URL +
-                                    "/" +
-                                    TwilioUtil.API_VERSION +
-                                    "/" +
-                                    TwilioUtil.API_ACCOUNTS +
-                                    "/" +
-                                    twilioRestClient.getAccountSid() +
-                                    "/" +
-                                    TwilioUtil.API_AUTHORIZED_CONNECT_APPS +
-                                    "/" + connectId, "GET",
-                            null);
+        TwilioUtil.initTwilio(messageContext);
+        TwilioRestClient twilioRestClient = Twilio.getRestClient();
+        Request request = new Request(HttpMethod.GET, Domains.API.toString(),
+                TwilioUtil.API_URL +
+                        "/" +
+                        twilioRestClient.getAccountSid() +
+                        "/" +
+                        TwilioUtil.API_CONNECT_APPS +
+                        "/" + connectId
+        );
+        Response response = twilioRestClient.request(request);
 
-            OMElement omResponse = TwilioUtil.parseResponse(response);
-            TwilioUtil.preparePayload(messageContext, omResponse);
-        } catch (Exception e) {
-            log.error(e);
-            TwilioUtil.handleException(e, "0002", messageContext);
-            throw new SynapseException(e);
-        }
+        OMElement omResponse = TwilioUtil.parseResponse(response);
+        TwilioUtil.preparePayload(messageContext, omResponse);
+
         log.auditLog("End: get connect app");
     }
 }
