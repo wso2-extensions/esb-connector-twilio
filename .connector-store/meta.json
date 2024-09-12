@@ -12,7 +12,6 @@
         {
             "tagName": "v1.1.0",
             "products": [
-                "EI 6.6.0",
                 "MI 4.1.0"
             ],
             "isHidden": false
