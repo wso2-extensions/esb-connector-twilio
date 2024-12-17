@@ -30,5 +30,6 @@
         <dependency component="twilio-cloud-connector-usage"/>
         <description>Twilio Cloud Connector</description>
     </component>
+    <displayName>Twilio</displayName>
     <icon>icon/icon.png</icon>
 </connector>
