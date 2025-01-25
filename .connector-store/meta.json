@@ -360,12 +360,7 @@
                     "isHidden":false
                 }
             ],
-            "connections": [
-                {
-                    "name": "twilio",
-                    "description": "Connection for sending and receiving messages via Twilio."
-                }
-            ],
+            "connections": [],
             "isHidden": false
         },
         {
@@ -713,12 +708,7 @@
                     "isHidden":false
                 }
             ],
-            "connections": [
-                {
-                    "name": "twilio",
-                    "description": "Connection for sending and receiving messages via Twilio."
-                }
-            ],
+            "connections": [],
             "isHidden": false
         }
     ]
