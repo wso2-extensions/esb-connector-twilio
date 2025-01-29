@@ -18,6 +18,7 @@
         {
             "tagName": "v1.1.1",
             "products": [
+                "MI 4.4.0",
                 "MI 4.3.0",
                 "MI 4.2.0",
                 "MI 4.1.0",
@@ -25,339 +26,339 @@
             ],
             "operations": [
                 {
-                    "name":"getConference",
-                    "description":"Get a conference by its Sid",
-                    "isHidden":false
+                    "name": "getConference",
+                    "description": "Get a conference by its Sid",
+                    "isHidden": false
                 },
                 {
-                    "name":"getConferenceList",
-                    "description":"Get a conference list by parameters",
-                    "isHidden":false
+                    "name": "getConferenceList",
+                    "description": "Get a conference list by parameters",
+                    "isHidden": false
                 },
                 {
-                    "name":"getParticipant",
-                    "description":"Get a participant of a given conference by call sid of the participant",
-                    "isHidden":false
+                    "name": "getParticipant",
+                    "description": "Get a participant of a given conference by call sid of the participant",
+                    "isHidden": false
                 },
                 {
-                    "name":"getParticipantList",
-                    "description":"Get a participant list of a conference",
-                    "isHidden":false
+                    "name": "getParticipantList",
+                    "description": "Get a participant list of a conference",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateParticipant",
-                    "description":"Updates a participant",
-                    "isHidden":false
+                    "name": "updateParticipant",
+                    "description": "Updates a participant",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeParticipant",
-                    "description":"Removes a participant",
-                    "isHidden":false
+                    "name": "removeParticipant",
+                    "description": "Removes a participant",
+                    "isHidden": false
                 },
                 {
-                    "name":"init",
-                    "description":"Configure Twilio Account with AccountSid and AuthToken",
-                    "isHidden":false
+                    "name": "init",
+                    "description": "Configure Twilio Account with AccountSid and AuthToken",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAccount",
-                    "description":"Get the details associated with the account",
-                    "isHidden":false
+                    "name": "getAccount",
+                    "description": "Get the details associated with the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAccountsList",
-                    "description":"Get the details of all accounts associated with the configured account with the given list filters",
-                    "isHidden":false
+                    "name": "getAccountsList",
+                    "description": "Get the details of all accounts associated with the configured account with the given list filters",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateAccount",
-                    "description":"Updates the account (Status can be only changed in sub accounts)",
-                    "isHidden":false
+                    "name": "updateAccount",
+                    "description": "Updates the account (Status can be only changed in sub accounts)",
+                    "isHidden": false
                 },
                 {
-                    "name":"createSubAccount",
-                    "description":"Creates a sub account under the pre configured main account",
-                    "isHidden":false
+                    "name": "createSubAccount",
+                    "description": "Creates a sub account under the pre configured main account",
+                    "isHidden": false
                 },
                 {
-                    "name":"createApplication",
-                    "description":"Create a new application given a FriendlyName",
-                    "isHidden":false
+                    "name": "createApplication",
+                    "description": "Create a new application given a FriendlyName",
+                    "isHidden": false
                 },
                 {
-                    "name":"getApplication",
-                    "description":"Get an application",
-                    "isHidden":false
+                    "name": "getApplication",
+                    "description": "Get an application",
+                    "isHidden": false
                 },
                 {
-                    "name":"getApplicationList",
-                    "description":"Get a list of applications bound to the account",
-                    "isHidden":false
+                    "name": "getApplicationList",
+                    "description": "Get a list of applications bound to the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateApplication",
-                    "description":"Update the parameters of an existing application",
-                    "isHidden":false
+                    "name": "updateApplication",
+                    "description": "Update the parameters of an existing application",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeApplication",
-                    "description":"Remove an application from the account",
-                    "isHidden":false
+                    "name": "removeApplication",
+                    "description": "Remove an application from the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"getConnectApp",
-                    "description":"Get a connect app from the Sid reference",
-                    "isHidden":false
+                    "name": "getConnectApp",
+                    "description": "Get a connect app from the Sid reference",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateConnectApp",
-                    "description":"Update a connect app from the Sid reference",
-                    "isHidden":false
+                    "name": "updateConnectApp",
+                    "description": "Update a connect app from the Sid reference",
+                    "isHidden": false
                 },
                 {
-                    "name":"getConnectAppList",
-                    "description":"Get a list of all connect app for the account",
-                    "isHidden":false
+                    "name": "getConnectAppList",
+                    "description": "Get a list of all connect app for the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAuthorizedConnectApp",
-                    "description":"Get an authorized connect app from the Sid reference",
-                    "isHidden":false
+                    "name": "getAuthorizedConnectApp",
+                    "description": "Get an authorized connect app from the Sid reference",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAuthorizedConnectAppList",
-                    "description":"Get a list of authorized connect apps for the account",
-                    "isHidden":false
+                    "name": "getAuthorizedConnectAppList",
+                    "description": "Get a list of authorized connect apps for the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"sendSms",
-                    "description":"Send SMS",
-                    "isHidden":false
+                    "name": "sendSms",
+                    "description": "Send SMS",
+                    "isHidden": false
                 },
                 {
-                    "name":"getSms",
-                    "description":"Returns Incoming and Outgoing SMS by Message Sid",
-                    "isHidden":false
+                    "name": "getSms",
+                    "description": "Returns Incoming and Outgoing SMS by Message Sid",
+                    "isHidden": false
                 },
                 {
-                    "name":"getSmsList",
-                    "description":"Returns a list of Incoming and Outgoing SMS Records",
-                    "isHidden":false
+                    "name": "getSmsList",
+                    "description": "Returns a list of Incoming and Outgoing SMS Records",
+                    "isHidden": false
                 },
                 {
-                    "name":"getShortCode",
-                    "description":"Returns the details of a Short Code associated with your account",
-                    "isHidden":false
+                    "name": "getShortCode",
+                    "description": "Returns the details of a Short Code associated with your account",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateShortCodeProperties",
-                    "description":"Updates the short code's properties",
-                    "isHidden":false
+                    "name": "updateShortCodeProperties",
+                    "description": "Updates the short code's properties",
+                    "isHidden": false
                 },
                 {
-                    "name":"getShortCodeList",
-                    "description":"Returns the short codes list associated to an account",
-                    "isHidden":false
+                    "name": "getShortCodeList",
+                    "description": "Returns the short codes list associated to an account",
+                    "isHidden": false
                 },
                 {
-                    "name":"makeCall",
-                    "description":"Make A Call",
-                    "isHidden":false
+                    "name": "makeCall",
+                    "description": "Make A Call",
+                    "isHidden": false
                 },
                 {
-                    "name":"getCall",
-                    "description":"Get details of a single Incoming or Outgoing Call",
-                    "isHidden":false
+                    "name": "getCall",
+                    "description": "Get details of a single Incoming or Outgoing Call",
+                    "isHidden": false
                 },
                 {
-                    "name":"getCallList",
-                    "description":"Get a list of incoming and outgoing calls",
-                    "isHidden":false
+                    "name": "getCallList",
+                    "description": "Get a list of incoming and outgoing calls",
+                    "isHidden": false
                 },
                 {
-                    "name":"modifyLiveCall",
-                    "description":"Modify a live call",
-                    "isHidden":false
+                    "name": "modifyLiveCall",
+                    "description": "Modify a live call",
+                    "isHidden": false
                 },
                 {
-                    "name":"getTranscription",
-                    "description":"Get recorded transcriptions by Transcription SID",
-                    "isHidden":false
+                    "name": "getTranscription",
+                    "description": "Get recorded transcriptions by Transcription SID",
+                    "isHidden": false
                 },
                 {
-                    "name":"getTranscriptionList",
-                    "description":"Get a list of recorded transcriptions",
-                    "isHidden":false
+                    "name": "getTranscriptionList",
+                    "description": "Get a list of recorded transcriptions",
+                    "isHidden": false
                 },
                 {
-                    "name":"getRecording",
-                    "description":"Get a recording",
-                    "isHidden":false
+                    "name": "getRecording",
+                    "description": "Get a recording",
+                    "isHidden": false
                 },
                 {
-                    "name":"getRecordingList",
-                    "description":"Get a list of recordings",
-                    "isHidden":false
+                    "name": "getRecordingList",
+                    "description": "Get a list of recordings",
+                    "isHidden": false
                 },
                 {
-                    "name":"deleteRecording",
-                    "description":"Delete a recording",
-                    "isHidden":false
+                    "name": "deleteRecording",
+                    "description": "Delete a recording",
+                    "isHidden": false
                 },
                 {
-                    "name":"sendSms",
-                    "description":"Send SMS",
-                    "isHidden":false
+                    "name": "sendSms",
+                    "description": "Send SMS",
+                    "isHidden": false
                 },
                 {
-                    "name":"getSms",
-                    "description":"Returns Incoming and Outgoing SMS by Message Sid",
-                    "isHidden":false
+                    "name": "getSms",
+                    "description": "Returns Incoming and Outgoing SMS by Message Sid",
+                    "isHidden": false
                 },
                 {
-                    "name":"getSmsList",
-                    "description":"Returns a list of Incoming and Outgoing SMS Records",
-                    "isHidden":false
+                    "name": "getSmsList",
+                    "description": "Returns a list of Incoming and Outgoing SMS Records",
+                    "isHidden": false
                 },
                 {
-                    "name":"getShortCode",
-                    "description":"Returns the details of a Short Code associated with your account",
-                    "isHidden":false
+                    "name": "getShortCode",
+                    "description": "Returns the details of a Short Code associated with your account",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateShortCodeProperties",
-                    "description":"Updates the short code's properties",
-                    "isHidden":false
+                    "name": "updateShortCodeProperties",
+                    "description": "Updates the short code's properties",
+                    "isHidden": false
                 },
                 {
-                    "name":"getShortCodeList",
-                    "description":"Returns the short codes list associated to an account",
-                    "isHidden":false
+                    "name": "getShortCodeList",
+                    "description": "Returns the short codes list associated to an account",
+                    "isHidden": false
                 },
                 {
-                    "name":"getQueue",
-                    "description":"Retrieve a call queue as represented by an SID",
-                    "isHidden":false
+                    "name": "getQueue",
+                    "description": "Retrieve a call queue as represented by an SID",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateQueue",
-                    "description":"Retrieve a call queue as represented by an SID and update its parameters",
-                    "isHidden":false
+                    "name": "updateQueue",
+                    "description": "Retrieve a call queue as represented by an SID and update its parameters",
+                    "isHidden": false
                 },
                 {
-                    "name":"getQueueList",
-                    "description":"Retrieve the list of queues from the specified account",
-                    "isHidden":false
+                    "name": "getQueueList",
+                    "description": "Retrieve the list of queues from the specified account",
+                    "isHidden": false
                 },
                 {
-                    "name":"createQueue",
-                    "description":"Create a new queue instance and add it to the current account's list of queues",
-                    "isHidden":false
+                    "name": "createQueue",
+                    "description": "Create a new queue instance and add it to the current account's list of queues",
+                    "isHidden": false
                 },
                 {
-                    "name":"getMember",
-                    "description":"Retrieve a member instance from a queue",
-                    "isHidden":false
+                    "name": "getMember",
+                    "description": "Retrieve a member instance from a queue",
+                    "isHidden": false
                 },
                 {
-                    "name":"dequeueMember",
-                    "description":"Dequeue a member instance from a queue",
-                    "isHidden":false
+                    "name": "dequeueMember",
+                    "description": "Dequeue a member instance from a queue",
+                    "isHidden": false
                 },
                 {
-                    "name":"getMemberList",
-                    "description":"Retrieve a list of member instance from a queue",
-                    "isHidden":false
+                    "name": "getMemberList",
+                    "description": "Retrieve a list of member instance from a queue",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAvailableLocalNumbers",
-                    "description":"Get available local numbers",
-                    "isHidden":false
+                    "name": "getAvailableLocalNumbers",
+                    "description": "Get available local numbers",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAvailableTollFreeNumbers",
-                    "description":"Get available toll-free numbers",
-                    "isHidden":false
+                    "name": "getAvailableTollFreeNumbers",
+                    "description": "Get available toll-free numbers",
+                    "isHidden": false
                 },
                 {
-                    "name":"getIncomingPhoneNumber",
-                    "description":"Get Incoming Phone number allocated to the Account by its Sid",
-                    "isHidden":false
+                    "name": "getIncomingPhoneNumber",
+                    "description": "Get Incoming Phone number allocated to the Account by its Sid",
+                    "isHidden": false
                 },
                 {
-                    "name":"getIncomingPhoneNumberList",
-                    "description":"Get Incoming Phone numbers list allocated to the Account",
-                    "isHidden":false
+                    "name": "getIncomingPhoneNumberList",
+                    "description": "Get Incoming Phone numbers list allocated to the Account",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeIncomingPhoneNumber",
-                    "description":"Remove an Incoming Phone number allocated to the Account",
-                    "isHidden":false
+                    "name": "removeIncomingPhoneNumber",
+                    "description": "Remove an Incoming Phone number allocated to the Account",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateIncomingPhoneNumber",
-                    "description":"Updates the Incoming Phone number",
-                    "isHidden":false
+                    "name": "updateIncomingPhoneNumber",
+                    "description": "Updates the Incoming Phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"purchasePhoneNumber",
-                    "description":"Purchases a Phone number",
-                    "isHidden":false
+                    "name": "purchasePhoneNumber",
+                    "description": "Purchases a Phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"getOutgoingPhoneNumber",
-                    "description":"get outgoing phone number",
-                    "isHidden":false
+                    "name": "getOutgoingPhoneNumber",
+                    "description": "get outgoing phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"getOutgoingPhoneNumberList",
-                    "description":"get outgoing phone number list",
-                    "isHidden":false
+                    "name": "getOutgoingPhoneNumberList",
+                    "description": "get outgoing phone number list",
+                    "isHidden": false
                 },
                 {
-                    "name":"addOutgoingPhoneNumber",
-                    "description":"add outgoing phone number",
-                    "isHidden":false
+                    "name": "addOutgoingPhoneNumber",
+                    "description": "add outgoing phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateOutgoingPhoneNumber",
-                    "description":"update outgoing phone number",
-                    "isHidden":false
+                    "name": "updateOutgoingPhoneNumber",
+                    "description": "update outgoing phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeOutgoingPhoneNumber",
-                    "description":"remove outgoing phone number",
-                    "isHidden":false
+                    "name": "removeOutgoingPhoneNumber",
+                    "description": "remove outgoing phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"getUsageRecordList",
-                    "description":"Get usage record list",
-                    "isHidden":false
+                    "name": "getUsageRecordList",
+                    "description": "Get usage record list",
+                    "isHidden": false
                 },
                 {
-                    "name":"getUsageTriggerList",
-                    "description":"Get usage trigger list",
-                    "isHidden":false
+                    "name": "getUsageTriggerList",
+                    "description": "Get usage trigger list",
+                    "isHidden": false
                 },
                 {
-                    "name":"getUsageTrigger",
-                    "description":"Get usage trigger",
-                    "isHidden":false
+                    "name": "getUsageTrigger",
+                    "description": "Get usage trigger",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateUsageTrigger",
-                    "description":"Update usage trigger",
-                    "isHidden":false
+                    "name": "updateUsageTrigger",
+                    "description": "Update usage trigger",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeUsageTrigger",
-                    "description":"Remove usage trigger",
-                    "isHidden":false
+                    "name": "removeUsageTrigger",
+                    "description": "Remove usage trigger",
+                    "isHidden": false
                 },
                 {
-                    "name":"addUsageTrigger",
-                    "description":"Add usage trigger",
-                    "isHidden":false
+                    "name": "addUsageTrigger",
+                    "description": "Add usage trigger",
+                    "isHidden": false
                 }
             ],
             "connections": [],
@@ -373,339 +374,339 @@
             ],
             "operations": [
                 {
-                    "name":"getConference",
-                    "description":"Get a conference by its Sid",
-                    "isHidden":false
+                    "name": "getConference",
+                    "description": "Get a conference by its Sid",
+                    "isHidden": false
                 },
                 {
-                    "name":"getConferenceList",
-                    "description":"Get a conference list by parameters",
-                    "isHidden":false
+                    "name": "getConferenceList",
+                    "description": "Get a conference list by parameters",
+                    "isHidden": false
                 },
                 {
-                    "name":"getParticipant",
-                    "description":"Get a participant of a given conference by call sid of the participant",
-                    "isHidden":false
+                    "name": "getParticipant",
+                    "description": "Get a participant of a given conference by call sid of the participant",
+                    "isHidden": false
                 },
                 {
-                    "name":"getParticipantList",
-                    "description":"Get a participant list of a conference",
-                    "isHidden":false
+                    "name": "getParticipantList",
+                    "description": "Get a participant list of a conference",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateParticipant",
-                    "description":"Updates a participant",
-                    "isHidden":false
+                    "name": "updateParticipant",
+                    "description": "Updates a participant",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeParticipant",
-                    "description":"Removes a participant",
-                    "isHidden":false
+                    "name": "removeParticipant",
+                    "description": "Removes a participant",
+                    "isHidden": false
                 },
                 {
-                    "name":"init",
-                    "description":"Configure Twilio Account with AccountSid and AuthToken",
-                    "isHidden":false
+                    "name": "init",
+                    "description": "Configure Twilio Account with AccountSid and AuthToken",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAccount",
-                    "description":"Get the details associated with the account",
-                    "isHidden":false
+                    "name": "getAccount",
+                    "description": "Get the details associated with the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAccountsList",
-                    "description":"Get the details of all accounts associated with the configured account with the given list filters",
-                    "isHidden":false
+                    "name": "getAccountsList",
+                    "description": "Get the details of all accounts associated with the configured account with the given list filters",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateAccount",
-                    "description":"Updates the account (Status can be only changed in sub accounts)",
-                    "isHidden":false
+                    "name": "updateAccount",
+                    "description": "Updates the account (Status can be only changed in sub accounts)",
+                    "isHidden": false
                 },
                 {
-                    "name":"createSubAccount",
-                    "description":"Creates a sub account under the pre configured main account",
-                    "isHidden":false
+                    "name": "createSubAccount",
+                    "description": "Creates a sub account under the pre configured main account",
+                    "isHidden": false
                 },
                 {
-                    "name":"createApplication",
-                    "description":"Create a new application given a FriendlyName",
-                    "isHidden":false
+                    "name": "createApplication",
+                    "description": "Create a new application given a FriendlyName",
+                    "isHidden": false
                 },
                 {
-                    "name":"getApplication",
-                    "description":"Get an application",
-                    "isHidden":false
+                    "name": "getApplication",
+                    "description": "Get an application",
+                    "isHidden": false
                 },
                 {
-                    "name":"getApplicationList",
-                    "description":"Get a list of applications bound to the account",
-                    "isHidden":false
+                    "name": "getApplicationList",
+                    "description": "Get a list of applications bound to the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateApplication",
-                    "description":"Update the parameters of an existing application",
-                    "isHidden":false
+                    "name": "updateApplication",
+                    "description": "Update the parameters of an existing application",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeApplication",
-                    "description":"Remove an application from the account",
-                    "isHidden":false
+                    "name": "removeApplication",
+                    "description": "Remove an application from the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"getConnectApp",
-                    "description":"Get a connect app from the Sid reference",
-                    "isHidden":false
+                    "name": "getConnectApp",
+                    "description": "Get a connect app from the Sid reference",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateConnectApp",
-                    "description":"Update a connect app from the Sid reference",
-                    "isHidden":false
+                    "name": "updateConnectApp",
+                    "description": "Update a connect app from the Sid reference",
+                    "isHidden": false
                 },
                 {
-                    "name":"getConnectAppList",
-                    "description":"Get a list of all connect app for the account",
-                    "isHidden":false
+                    "name": "getConnectAppList",
+                    "description": "Get a list of all connect app for the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAuthorizedConnectApp",
-                    "description":"Get an authorized connect app from the Sid reference",
-                    "isHidden":false
+                    "name": "getAuthorizedConnectApp",
+                    "description": "Get an authorized connect app from the Sid reference",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAuthorizedConnectAppList",
-                    "description":"Get a list of authorized connect apps for the account",
-                    "isHidden":false
+                    "name": "getAuthorizedConnectAppList",
+                    "description": "Get a list of authorized connect apps for the account",
+                    "isHidden": false
                 },
                 {
-                    "name":"sendSms",
-                    "description":"Send SMS",
-                    "isHidden":false
+                    "name": "sendSms",
+                    "description": "Send SMS",
+                    "isHidden": false
                 },
                 {
-                    "name":"getSms",
-                    "description":"Returns Incoming and Outgoing SMS by Message Sid",
-                    "isHidden":false
+                    "name": "getSms",
+                    "description": "Returns Incoming and Outgoing SMS by Message Sid",
+                    "isHidden": false
                 },
                 {
-                    "name":"getSmsList",
-                    "description":"Returns a list of Incoming and Outgoing SMS Records",
-                    "isHidden":false
+                    "name": "getSmsList",
+                    "description": "Returns a list of Incoming and Outgoing SMS Records",
+                    "isHidden": false
                 },
                 {
-                    "name":"getShortCode",
-                    "description":"Returns the details of a Short Code associated with your account",
-                    "isHidden":false
+                    "name": "getShortCode",
+                    "description": "Returns the details of a Short Code associated with your account",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateShortCodeProperties",
-                    "description":"Updates the short code's properties",
-                    "isHidden":false
+                    "name": "updateShortCodeProperties",
+                    "description": "Updates the short code's properties",
+                    "isHidden": false
                 },
                 {
-                    "name":"getShortCodeList",
-                    "description":"Returns the short codes list associated to an account",
-                    "isHidden":false
+                    "name": "getShortCodeList",
+                    "description": "Returns the short codes list associated to an account",
+                    "isHidden": false
                 },
                 {
-                    "name":"makeCall",
-                    "description":"Make A Call",
-                    "isHidden":false
+                    "name": "makeCall",
+                    "description": "Make A Call",
+                    "isHidden": false
                 },
                 {
-                    "name":"getCall",
-                    "description":"Get details of a single Incoming or Outgoing Call",
-                    "isHidden":false
+                    "name": "getCall",
+                    "description": "Get details of a single Incoming or Outgoing Call",
+                    "isHidden": false
                 },
                 {
-                    "name":"getCallList",
-                    "description":"Get a list of incoming and outgoing calls",
-                    "isHidden":false
+                    "name": "getCallList",
+                    "description": "Get a list of incoming and outgoing calls",
+                    "isHidden": false
                 },
                 {
-                    "name":"modifyLiveCall",
-                    "description":"Modify a live call",
-                    "isHidden":false
+                    "name": "modifyLiveCall",
+                    "description": "Modify a live call",
+                    "isHidden": false
                 },
                 {
-                    "name":"getTranscription",
-                    "description":"Get recorded transcriptions by Transcription SID",
-                    "isHidden":false
+                    "name": "getTranscription",
+                    "description": "Get recorded transcriptions by Transcription SID",
+                    "isHidden": false
                 },
                 {
-                    "name":"getTranscriptionList",
-                    "description":"Get a list of recorded transcriptions",
-                    "isHidden":false
+                    "name": "getTranscriptionList",
+                    "description": "Get a list of recorded transcriptions",
+                    "isHidden": false
                 },
                 {
-                    "name":"getRecording",
-                    "description":"Get a recording",
-                    "isHidden":false
+                    "name": "getRecording",
+                    "description": "Get a recording",
+                    "isHidden": false
                 },
                 {
-                    "name":"getRecordingList",
-                    "description":"Get a list of recordings",
-                    "isHidden":false
+                    "name": "getRecordingList",
+                    "description": "Get a list of recordings",
+                    "isHidden": false
                 },
                 {
-                    "name":"deleteRecording",
-                    "description":"Delete a recording",
-                    "isHidden":false
+                    "name": "deleteRecording",
+                    "description": "Delete a recording",
+                    "isHidden": false
                 },
                 {
-                    "name":"sendSms",
-                    "description":"Send SMS",
-                    "isHidden":false
+                    "name": "sendSms",
+                    "description": "Send SMS",
+                    "isHidden": false
                 },
                 {
-                    "name":"getSms",
-                    "description":"Returns Incoming and Outgoing SMS by Message Sid",
-                    "isHidden":false
+                    "name": "getSms",
+                    "description": "Returns Incoming and Outgoing SMS by Message Sid",
+                    "isHidden": false
                 },
                 {
-                    "name":"getSmsList",
-                    "description":"Returns a list of Incoming and Outgoing SMS Records",
-                    "isHidden":false
+                    "name": "getSmsList",
+                    "description": "Returns a list of Incoming and Outgoing SMS Records",
+                    "isHidden": false
                 },
                 {
-                    "name":"getShortCode",
-                    "description":"Returns the details of a Short Code associated with your account",
-                    "isHidden":false
+                    "name": "getShortCode",
+                    "description": "Returns the details of a Short Code associated with your account",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateShortCodeProperties",
-                    "description":"Updates the short code's properties",
-                    "isHidden":false
+                    "name": "updateShortCodeProperties",
+                    "description": "Updates the short code's properties",
+                    "isHidden": false
                 },
                 {
-                    "name":"getShortCodeList",
-                    "description":"Returns the short codes list associated to an account",
-                    "isHidden":false
+                    "name": "getShortCodeList",
+                    "description": "Returns the short codes list associated to an account",
+                    "isHidden": false
                 },
                 {
-                    "name":"getQueue",
-                    "description":"Retrieve a call queue as represented by an SID",
-                    "isHidden":false
+                    "name": "getQueue",
+                    "description": "Retrieve a call queue as represented by an SID",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateQueue",
-                    "description":"Retrieve a call queue as represented by an SID and update its parameters",
-                    "isHidden":false
+                    "name": "updateQueue",
+                    "description": "Retrieve a call queue as represented by an SID and update its parameters",
+                    "isHidden": false
                 },
                 {
-                    "name":"getQueueList",
-                    "description":"Retrieve the list of queues from the specified account",
-                    "isHidden":false
+                    "name": "getQueueList",
+                    "description": "Retrieve the list of queues from the specified account",
+                    "isHidden": false
                 },
                 {
-                    "name":"createQueue",
-                    "description":"Create a new queue instance and add it to the current account's list of queues",
-                    "isHidden":false
+                    "name": "createQueue",
+                    "description": "Create a new queue instance and add it to the current account's list of queues",
+                    "isHidden": false
                 },
                 {
-                    "name":"getMember",
-                    "description":"Retrieve a member instance from a queue",
-                    "isHidden":false
+                    "name": "getMember",
+                    "description": "Retrieve a member instance from a queue",
+                    "isHidden": false
                 },
                 {
-                    "name":"dequeueMember",
-                    "description":"Dequeue a member instance from a queue",
-                    "isHidden":false
+                    "name": "dequeueMember",
+                    "description": "Dequeue a member instance from a queue",
+                    "isHidden": false
                 },
                 {
-                    "name":"getMemberList",
-                    "description":"Retrieve a list of member instance from a queue",
-                    "isHidden":false
+                    "name": "getMemberList",
+                    "description": "Retrieve a list of member instance from a queue",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAvailableLocalNumbers",
-                    "description":"Get available local numbers",
-                    "isHidden":false
+                    "name": "getAvailableLocalNumbers",
+                    "description": "Get available local numbers",
+                    "isHidden": false
                 },
                 {
-                    "name":"getAvailableTollFreeNumbers",
-                    "description":"Get available toll-free numbers",
-                    "isHidden":false
+                    "name": "getAvailableTollFreeNumbers",
+                    "description": "Get available toll-free numbers",
+                    "isHidden": false
                 },
                 {
-                    "name":"getIncomingPhoneNumber",
-                    "description":"Get Incoming Phone number allocated to the Account by its Sid",
-                    "isHidden":false
+                    "name": "getIncomingPhoneNumber",
+                    "description": "Get Incoming Phone number allocated to the Account by its Sid",
+                    "isHidden": false
                 },
                 {
-                    "name":"getIncomingPhoneNumberList",
-                    "description":"Get Incoming Phone numbers list allocated to the Account",
-                    "isHidden":false
+                    "name": "getIncomingPhoneNumberList",
+                    "description": "Get Incoming Phone numbers list allocated to the Account",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeIncomingPhoneNumber",
-                    "description":"Remove an Incoming Phone number allocated to the Account",
-                    "isHidden":false
+                    "name": "removeIncomingPhoneNumber",
+                    "description": "Remove an Incoming Phone number allocated to the Account",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateIncomingPhoneNumber",
-                    "description":"Updates the Incoming Phone number",
-                    "isHidden":false
+                    "name": "updateIncomingPhoneNumber",
+                    "description": "Updates the Incoming Phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"purchasePhoneNumber",
-                    "description":"Purchases a Phone number",
-                    "isHidden":false
+                    "name": "purchasePhoneNumber",
+                    "description": "Purchases a Phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"getOutgoingPhoneNumber",
-                    "description":"get outgoing phone number",
-                    "isHidden":false
+                    "name": "getOutgoingPhoneNumber",
+                    "description": "get outgoing phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"getOutgoingPhoneNumberList",
-                    "description":"get outgoing phone number list",
-                    "isHidden":false
+                    "name": "getOutgoingPhoneNumberList",
+                    "description": "get outgoing phone number list",
+                    "isHidden": false
                 },
                 {
-                    "name":"addOutgoingPhoneNumber",
-                    "description":"add outgoing phone number",
-                    "isHidden":false
+                    "name": "addOutgoingPhoneNumber",
+                    "description": "add outgoing phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateOutgoingPhoneNumber",
-                    "description":"update outgoing phone number",
-                    "isHidden":false
+                    "name": "updateOutgoingPhoneNumber",
+                    "description": "update outgoing phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeOutgoingPhoneNumber",
-                    "description":"remove outgoing phone number",
-                    "isHidden":false
+                    "name": "removeOutgoingPhoneNumber",
+                    "description": "remove outgoing phone number",
+                    "isHidden": false
                 },
                 {
-                    "name":"getUsageRecordList",
-                    "description":"Get usage record list",
-                    "isHidden":false
+                    "name": "getUsageRecordList",
+                    "description": "Get usage record list",
+                    "isHidden": false
                 },
                 {
-                    "name":"getUsageTriggerList",
-                    "description":"Get usage trigger list",
-                    "isHidden":false
+                    "name": "getUsageTriggerList",
+                    "description": "Get usage trigger list",
+                    "isHidden": false
                 },
                 {
-                    "name":"getUsageTrigger",
-                    "description":"Get usage trigger",
-                    "isHidden":false
+                    "name": "getUsageTrigger",
+                    "description": "Get usage trigger",
+                    "isHidden": false
                 },
                 {
-                    "name":"updateUsageTrigger",
-                    "description":"Update usage trigger",
-                    "isHidden":false
+                    "name": "updateUsageTrigger",
+                    "description": "Update usage trigger",
+                    "isHidden": false
                 },
                 {
-                    "name":"removeUsageTrigger",
-                    "description":"Remove usage trigger",
-                    "isHidden":false
+                    "name": "removeUsageTrigger",
+                    "description": "Remove usage trigger",
+                    "isHidden": false
                 },
                 {
-                    "name":"addUsageTrigger",
-                    "description":"Add usage trigger",
-                    "isHidden":false
+                    "name": "addUsageTrigger",
+                    "description": "Add usage trigger",
+                    "isHidden": false
                 }
             ],
             "connections": [],
